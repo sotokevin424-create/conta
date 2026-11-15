@@ -10,6 +10,7 @@ import unicodedata
 import inspect
 import os
 import re
+import zipfile
 from datetime import date, datetime
 from xml.sax.saxutils import escape as xesc
 from collections import OrderedDict
@@ -109,6 +110,88 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.tile-mark):hover{border-col
 .ratio dt{color:var(--muted)}.ratio dd{margin:0;overflow-wrap:anywhere}
 .ratio p{margin:0;font-size:.88rem;color:#2A3A52;border-top:1px solid var(--line);padding-top:.6rem}
 
+/* Decisiones */
+.decision-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px;
+  overflow:hidden;margin:.2rem 0 1rem;padding:24px 28px;border-radius:20px;
+  background:linear-gradient(115deg,#0A2147 0%,#123E79 62%,#1855A0 100%);
+  color:#fff;box-shadow:0 12px 28px rgba(10,33,71,.16)}
+.decision-hero:after{content:"";position:absolute;width:240px;height:240px;right:80px;top:-150px;
+  border:1px solid rgba(255,255,255,.12);border-radius:50%;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025)}
+.decision-hero-copy{position:relative;z-index:1;max-width:76%}
+.decision-hero-label{color:#B8D3FA;font-size:.7rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.decision-hero h2{margin:.4rem 0 .25rem!important;color:#fff!important;font-size:1.8rem!important}
+.decision-hero p{margin:0;color:#E0EAF8;font-size:.94rem;line-height:1.5}
+.decision-hero-total{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:10px;
+  flex:none;width:128px;height:88px;border:1px solid rgba(255,255,255,.23);border-radius:16px;
+  background:rgba(255,255,255,.1);backdrop-filter:blur(8px)}
+.decision-hero-total strong{font-family:var(--display);font-size:2.6rem;line-height:1;color:#fff}
+.decision-hero-total span{font-size:.72rem;line-height:1.25;color:#D8E6FA;font-weight:600}
+.decision-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 1.1rem}
+.decision-stat{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid var(--decision-border);
+  border-left:4px solid var(--decision-accent);border-radius:14px;background:var(--surface);box-shadow:var(--sh)}
+.decision-stat.danger,.decision-choice.danger,.decision-card.danger{
+  --decision-accent:#B3261E;--decision-bg:#FDECEA;--decision-border:#F2C2BF;--decision-text:#6F1D19}
+.decision-stat.review,.decision-choice.review,.decision-card.review{
+  --decision-accent:#A66A00;--decision-bg:#FFF5D9;--decision-border:#EBD393;--decision-text:#694300}
+.decision-stat.good,.decision-choice.good,.decision-card.good{
+  --decision-accent:#0B7A4F;--decision-bg:#E6F4EE;--decision-border:#B7DDCA;--decision-text:#084F36}
+.decision-focus-heading.danger,.decision-focus-heading.review,.decision-focus-heading.good{
+  --decision-accent:#78B8E8;--decision-bg:#EEF7FF;--decision-border:#D1E6F7;--decision-text:#244B6C}
+.decision-stat-mark{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:12px;
+  background:var(--decision-bg);color:var(--decision-accent);font-size:1.15rem;font-weight:700}
+.decision-stat-copy{min-width:0}
+.decision-stat-copy span,.decision-stat-copy small{display:block;color:var(--muted)}
+.decision-stat-copy span{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.decision-stat-copy strong{display:block;color:var(--navy);font-family:var(--display);font-size:1.8rem;line-height:1.1}
+.decision-stat-copy small{font-size:.74rem;line-height:1.35}
+.decision-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.85rem 0 1rem}
+.decision-card{min-height:100%;padding:17px;border:1px solid var(--decision-border);
+  border-top:4px solid var(--decision-accent);border-radius:15px;background:var(--decision-bg)}
+.decision-card-head{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:var(--decision-text);
+  font-size:.88rem;font-weight:700}
+.decision-card-step{display:inline-flex;align-items:center;justify-content:center;flex:none;width:27px;height:27px;
+  border-radius:9px;background:var(--decision-accent);color:#fff;font-size:.72rem}
+.decision-card p{margin:0;color:#24354C;font-size:.9rem;line-height:1.55;overflow-wrap:anywhere}
+.decision-workspace-title{margin:0 0 .25rem;color:var(--navy);font-size:1.1rem;font-weight:700}
+.decision-workspace-caption{margin:0 0 .8rem;color:var(--muted);font-size:.84rem}
+.decision-choice{padding:12px 13px;border:1px solid var(--decision-border);border-left:4px solid var(--decision-accent);
+  border-radius:12px;background:var(--decision-bg)}
+.decision-choice.danger .decision-choice-priority{background:#FDECEA;border-color:#F2C2BF;color:#6F1D19}
+.decision-choice.review .decision-choice-priority{background:#FFF5D9;border-color:#EBD393;color:#694300}
+.decision-choice.good .decision-choice-priority{background:#E6F4EE;border-color:#B7DDCA;color:#084F36}
+.decision-choice-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.decision-choice-priority{display:inline-flex;align-items:center;padding:3px 8px;border:1px solid #DDE8F1;
+  border-radius:999px;background:#F5F9FC;color:#496982;font-size:.66rem;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase}
+.decision-choice-source{color:var(--muted);font-size:.7rem}
+.decision-choice-title{margin:0;color:var(--ink);font-size:.87rem;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.decision-focus-heading{padding:17px 19px;border:0;border-radius:12px;
+  background:#F6FAFE;margin-bottom:.75rem;scroll-margin-top:1.25rem}
+.decision-focus-overline{display:flex;align-items:center;gap:7px;color:#54728E;
+  font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.decision-focus-heading h3{margin:.5rem 0 .15rem;color:var(--navy);font-size:1.25rem}
+.decision-focus-heading p{margin:0;color:var(--muted);font-size:.82rem}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.decision-focus-heading){
+  border:1px solid #D56A7A!important;border-radius:17px;background:#fff;
+  box-shadow:0 4px 18px rgba(10,33,71,.055)}
+.decision-route{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:.4rem}
+.decision-route-label{color:var(--muted);font-size:.84rem}
+.decision-evidence{margin:.65rem 0 1rem}
+.decision-evidence-title{margin:0 0 .45rem;color:var(--navy);font-size:.82rem;font-weight:700}
+.decision-evidence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:8px}
+.decision-evidence-card{padding:11px 12px;border:1px solid #E5EDF5;border-radius:12px;background:#F8FBFE}
+.decision-evidence-card>strong{display:block;margin:0 0 7px;color:#344E68;font-size:.82rem}
+.decision-evidence-values{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.decision-evidence-values span{display:block;color:#71849A;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em}
+.decision-evidence-values b{display:block;color:#263E57;font-size:.78rem;overflow-wrap:anywhere}
+.decision-value{padding:1px 5px;border:1px solid #C4DFF3;border-radius:5px;background:#EAF5FF;
+  color:#17456C;font-weight:700;white-space:nowrap}
+.stmt tr.decision-focus td{background:#EAF5FF!important;color:#244B6C;border-top:1px solid #C4DFF3;
+  border-bottom:1px solid #C4DFF3;font-weight:700}
+.stmt tr.decision-focus td:first-child:before{content:"◆";margin-right:8px;color:#4E8BB8;font-size:.68rem}
+.ratio.decision-focus{border:2px solid #7FB5DB;box-shadow:0 0 0 4px rgba(127,181,219,.14)}
+.ratio.decision-focus .ratio-value{display:table;padding:3px 8px;border-radius:8px;background:#EAF5FF;color:#24567B}
+
 /* Sidebar */
 section[data-testid="stSidebar"]{background:var(--navy);border-right:1px solid #14336A}
 section[data-testid="stSidebar"] .stMarkdown,section[data-testid="stSidebar"] p,
@@ -182,6 +265,10 @@ section[data-testid="stSidebar"] :focus-visible{outline:3px solid #fff!important
 @media (max-width:640px){
   .block-container{padding:1.2rem 1rem 3rem}
   .kpis{grid-template-columns:1fr 1fr}.ratios{grid-template-columns:1fr}
+  .decision-hero{align-items:flex-start;padding:20px;gap:12px}
+  .decision-hero-copy{max-width:100%}.decision-hero-total{width:88px;height:72px;gap:5px}
+  .decision-hero-total strong{font-size:2rem}.decision-hero-total span{font-size:.64rem}
+  .decision-stat-grid,.decision-grid{grid-template-columns:1fr}
   .stepper{gap:8px 16px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -195,6 +282,7 @@ ICONS = {
     "percent": '<line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
     "bar-chart": '<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>',
     "file-text": '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/>',
+    "checklist": '<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/>',
     "search": '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     "check": '<polyline points="20 6 9 17 4 12"/>',
     "lock": '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
@@ -225,6 +313,16 @@ def H(markup, target=st):
     target.markdown("".join(line.strip() for line in markup.strip().splitlines()), unsafe_allow_html=True)
 
 
+def scroll_to_element(element_id, block="center"):
+    st.html(
+        '<script>window.setTimeout(() => {'
+        f'const target = document.getElementById({json.dumps(element_id)});'
+        f'if (target) target.scrollIntoView({{behavior: "auto", block: "{block}"}});'
+        '}, 180);</script>',
+        unsafe_allow_javascript=True,
+    )
+
+
 def esc(value):
     return html.escape("" if value is None else str(value))
 
@@ -242,6 +340,9 @@ def btn(label, material=None, **kwargs):
 
 
 def go(page_name):
+    if page_name != "Decisiones":
+        st.session_state["decision_detail_index"] = None
+    st.session_state["decision_scroll_to_detail"] = False
     st.session_state.page = page_name
     st.rerun()
 
@@ -595,16 +696,30 @@ def acct(v):
     return f"({abs(v):,.2f})" if v < -0.004 else f"{v:,.2f}"
 
 
-def statement_table(rows, headers):
+def statement_table(rows, headers, focus_labels=None, focus_id=None):
     """rows: (tipo, etiqueta, [valores]); tipo = sec | item | tot | grand."""
     head = '<th scope="col">Concepto</th>' + "".join(f'<th scope="col" class="num">{esc(h)}</th>' for h in headers)
     body = ""
+    normalized_focus = [_norm(label) for label in (focus_labels or [])]
+    focus_id_written = False
     for kind, label, vals in rows:
         if kind == "sec":
             body += f'<tr class="sec"><td colspan="{len(headers) + 1}">{esc(label)}</td></tr>'
         else:
             cells = "".join(f'<td class="num">{"" if v is None else acct(v)}</td>' for v in vals)
-            body += f'<tr class="{kind}"><td>{esc(label)}</td>{cells}</tr>'
+            normalized_label = _norm(label)
+            is_focus = any(
+                normalized_label == focus or normalized_label.endswith(focus)
+                for focus in normalized_focus
+            )
+            focus_class = " decision-focus" if is_focus else ""
+            focus_aria = ' aria-label="Valor que originó la decisión"' if is_focus else ""
+            row_id = (
+                f' id="{esc(focus_id)}"'
+                if is_focus and focus_id and not focus_id_written else ""
+            )
+            focus_id_written = focus_id_written or bool(row_id)
+            body += f'<tr class="{kind}{focus_class}"{row_id}{focus_aria}><td>{esc(label)}</td>{cells}</tr>'
     H(f'<div class="stmt-wrap"><table class="stmt"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
 
 
@@ -788,6 +903,18 @@ _ALIAS = {
     "cuentas por cobrar": "Clientes", "cuentas por pagar": "Proveedores", "inventario": "Inventarios",
     "efectivo": "Caja", "ventas netas": "Ventas", "ingresos": "Ventas", "iva por acreditar": "IVA acreditable",
     "equipo de computo": "Equipo de cómputo", "gastos de operacion": "Gastos de administración",
+    "ingresos por servicios": "Ventas", "costo de venta": "Costo de ventas",
+    "gastos de renta": "Gastos de administración", "gastos de sueldos": "Gastos de administración",
+    "gastos de servicio": "Gastos de administración", "gastos de servicios": "Gastos de administración",
+    "gastos de depreciacion": "Gastos de administración", "gastos de depreciacin": "Gastos de administración",
+    "utilidad perdida neta": "Utilidad neta", "perdida del ejercicio": "Resultado del ejercicio",
+    "utilidad prdida neta": "Utilidad neta", "prdida del ejercicio": "Resultado del ejercicio",
+    "prestamos bancarios por pagar": "Préstamos bancarios a corto plazo",
+    "prstamos bancarios por pagar": "Préstamos bancarios a corto plazo",
+    "depreciacion acumulada de mobiliario y equipo": "Depreciación acumulada",
+    "depreciacion acum de mobiliario y equipo": "Depreciación acumulada",
+    "depreciacin acum de mobiliario y equipo": "Depreciación acumulada",
+    "eq de transporte": "Equipo de transporte",
 }
 LOOKUP = {_norm(c): c for cs in CATALOGO.values() for c in cs}
 LOOKUP.update({_norm(k): v for k, v in _ALIAS.items()})
@@ -832,13 +959,119 @@ def _stitch(lines):
     out = []
     for ln in lines:
         label, nums = _from_line(ln)
-        if out and nums and not label:
+        if out:
             prev_label, prev_nums = _from_line(out[-1])
-            if prev_label and len(prev_nums) < 3:
+            prev_words = _norm(prev_label).split()
+            ends_midphrase = bool(prev_words and prev_words[-1] in {"de", "del", "por", "a", "y", "con"})
+            if prev_label and ends_midphrase and label and not nums and prev_nums:
+                parts = out[-1].split()
+                first_amount = next(i for i, part in enumerate(parts) if _to_num(part) is not None)
+                parts[first_amount:first_amount] = ln.strip().split()
+                out[-1] = " ".join(parts)
+                continue
+            if prev_label and ends_midphrase and nums and not prev_nums:
+                out[-1] += " " + ln.strip()
+                continue
+            if nums and not label and prev_label and len(prev_nums) < 3:
                 out[-1] += " " + ln.strip()
                 continue
         out.append(ln)
     return out
+
+
+def _read_pdf_statements(page_texts):
+    """Prioriza estados comparativos e ignora pólizas, balanzas y flujos repetidos."""
+    balance_accounts = set().union(*(set(CATALOGO[c]) for c in CATEGORIAS_BALANCE))
+    income_accounts = set(CATALOGO["Estado de resultados (opcional)"])
+    balances = []
+    income_by_year = {}
+
+    for text in page_texts:
+        page_lines = _stitch(text.splitlines())
+        normalized_page = _norm(text)
+        if (
+            "comparativo" in normalized_page
+            and "balance" in normalized_page
+            and "situacion financiera" in normalized_page
+            and "total activo" in normalized_page
+            and "capital contable" in normalized_page
+        ):
+            header = next(
+                (line for line in page_lines if "comparativo" in _norm(line) and "balance" in _norm(line)),
+                "",
+            )
+            years = re.findall(r"\b(?:19|20)\d{2}\b", _norm(header))
+            recent_first = len(years) > 1 and int(years[0]) > int(years[1])
+            page_rows, matched = [], set()
+            for line in page_lines:
+                label, nums = _from_line(line)
+                key = LOOKUP.get(_norm(label))
+                if key not in balance_accounts or len(nums) < 2 or key in matched:
+                    continue
+                old, new = (nums[1], nums[0]) if recent_first else (nums[0], nums[1])
+                page_rows.append((label, [old, new]))
+                matched.add(key)
+            if len(matched) >= 3:
+                balances.append((len(matched), page_rows))
+
+        heading_index = None
+        year = None
+        for i, line in enumerate(page_lines):
+            year_match = re.match(r"estado de resultados\s+(19\d{2}|20\d{2})\b", _norm(line))
+            if year_match:
+                heading_index = i
+                year = int(year_match.group(1))
+                break
+        if heading_index is None or year is None:
+            continue
+        page_values = {}
+        for line in page_lines[heading_index + 1:]:
+            label, nums = _from_line(line)
+            key = LOOKUP.get(_norm(label))
+            if key not in income_accounts or not nums:
+                continue
+            value = nums[-1]
+            if key in {"Ventas", "Gastos de administración"}:
+                page_values[key] = page_values.get(key, 0.0) + value
+            else:
+                page_values[key] = value
+        if len(page_values) >= 3:
+            current = income_by_year.get(year)
+            if current is None or len(page_values) > len(current):
+                income_by_year[year] = page_values
+
+    rows = []
+    if balances:
+        rows.extend(max(balances, key=lambda item: item[0])[1])
+
+    years = sorted(income_by_year)
+    if years:
+        for year in years:
+            values = income_by_year[year]
+            if "Utilidad bruta" not in values and {"Ventas", "Costo de ventas"} <= values.keys():
+                values["Utilidad bruta"] = (
+                    values["Ventas"] - values.get("Devoluciones sobre ventas", 0.0)
+                    - values["Costo de ventas"]
+                )
+            if "Utilidad operativa" not in values and "Utilidad bruta" in values:
+                values["Utilidad operativa"] = (
+                    values["Utilidad bruta"] - values.get("Gastos de venta", 0.0)
+                    - values.get("Gastos de administración", 0.0)
+                    + values.get("Otros ingresos", 0.0) - values.get("Otros gastos", 0.0)
+                )
+            if "Utilidad neta" not in values and "Utilidad operativa" in values:
+                values["Utilidad neta"] = (
+                    values["Utilidad operativa"] - values.get("Gastos por intereses", 0.0)
+                    - values.get("Impuestos a la utilidad", 0.0)
+                )
+        old_year, new_year = (years[0], years[-1]) if len(years) > 1 else (None, years[0])
+        concepts = set().union(*(income_by_year[year].keys() for year in years))
+        for concept in sorted(concepts):
+            old = income_by_year.get(old_year, {}).get(concept, 0.0) if old_year is not None else 0.0
+            new = income_by_year.get(new_year, {}).get(concept, 0.0)
+            rows.append((concept, [old, new]))
+
+    return (rows, ["Anterior Reciente"]) if rows else None
 
 
 def _read_rows(f):
@@ -858,9 +1091,31 @@ def _read_rows(f):
             lines.append(line)
 
     if ext in ("xlsx", "xls"):
-        for sheet in pd.read_excel(io.BytesIO(data), sheet_name=None, header=None).values():
+        workbook = pd.read_excel(io.BytesIO(data), sheet_name=None, header=None)
+        ignored_sheets = ("comprobacion", "indicadores", "razon", "ratio", "resumen", "variacion")
+        selected_sheets = [
+            (name, sheet) for name, sheet in workbook.items()
+            if not any(term in _norm(name) for term in ignored_sheets)
+        ] or list(workbook.items())
+        candidates = []
+        for name, sheet in selected_sheets:
+            sheet_rows, sheet_lines, matched = [], [], set()
             for row in sheet.itertuples(index=False):
-                add_cells(row)
+                cells = [str(cell).strip() for cell in row if pd.notna(cell) and str(cell).strip()]
+                if not cells:
+                    continue
+                parsed = _from_cells(cells)
+                sheet_rows.append(parsed)
+                sheet_lines.append(" ".join(cells))
+                key = LOOKUP.get(_norm(parsed[0]))
+                if key and parsed[1]:
+                    matched.add(key)
+            preferred_name = _norm(name) in {"datos", "data", "balance", "estados financieros"}
+            candidates.append((len(matched), preferred_name, sheet_rows, sheet_lines))
+        candidates.sort(key=lambda candidate: (candidate[0], candidate[1]), reverse=True)
+        for _, _, sheet_rows, sheet_lines in candidates:
+            rows.extend(sheet_rows)
+            lines.extend(sheet_lines)
     elif ext == "csv":
         text = data.decode("utf-8-sig", errors="replace")
         sheet = pd.read_csv(io.StringIO(text), header=None, sep=None, engine="python", dtype=str)
@@ -868,15 +1123,20 @@ def _read_rows(f):
             add_cells(row)
     elif ext == "pdf":
         from pypdf import PdfReader
-        raw = []
+        page_texts = []
         for page in PdfReader(io.BytesIO(data)).pages:
             try:
                 text = page.extract_text(extraction_mode="layout") or ""
             except TypeError:  # versiones antiguas de pypdf
                 text = page.extract_text() or ""
-            raw.extend(text.splitlines())
-        for line in _stitch(raw):
-            add_line(line)
+            page_texts.append(text)
+        statement_rows = _read_pdf_statements(page_texts)
+        if statement_rows:
+            rows, lines = statement_rows
+        else:
+            raw = [line for text in page_texts for line in text.splitlines()]
+            for line in _stitch(raw):
+                add_line(line)
     elif ext == "docx":
         from docx import Document
         d = Document(io.BytesIO(data))
@@ -897,6 +1157,9 @@ def _recent_first(lines):
         a, b = re.search(r"\b(reciente|actual)\b", n), re.search(r"\banterior\b", n)
         if a and b:
             return a.start() < b.start()
+        years = re.findall(r"\b(?:19|20)\d{2}\b", n)
+        if len(years) > 1:
+            return int(years[0]) > int(years[1])
     return False
 
 
@@ -923,12 +1186,326 @@ def extract_accounts(files):
             old, new = (0.0, nums[0]) if len(nums) == 1 else (nums[0], nums[1])
             if swap and len(nums) > 1:
                 old, new = new, old
-            found[key] = (abs(old), abs(new))
+            if key == "Resultado del ejercicio" and "perdida del ejercicio" in _norm(label):
+                values = (-abs(old), -abs(new))
+            elif key in {"Utilidad bruta", "Utilidad operativa", "Utilidad neta"}:
+                values = (old if old < 0 else abs(old), new if new < 0 else abs(new))
+            else:
+                values = (abs(old), abs(new))
+            if key in found:
+                if any(abs(a - b) >= 0.01 for a, b in zip(found[key], values)):
+                    warns.append(
+                        f"{key}: aparece más de una vez con importes distintos; "
+                        "se conservó la primera lectura."
+                    )
+                continue
+            found[key] = values
     accounts = base_accounts()
     for a in accounts:
         if a["Concepto"] in found:
             a["Anterior"], a["Reciente"] = found[a["Concepto"]]
     return accounts, len(found), unknown, warns
+
+
+def merge_imported_accounts(existing, imported):
+    """Aplica saldos importados sin borrar cuentas manuales ni conceptos personalizados."""
+    merged = [dict(account) for account in existing]
+    positions = {account["Concepto"].casefold(): i for i, account in enumerate(merged)}
+    applied = 0
+    for account in imported:
+        old, new = float(account["Anterior"]), float(account["Reciente"])
+        if not old and not new:
+            continue
+        key = account["Concepto"].casefold()
+        if key in positions:
+            merged[positions[key]]["Anterior"] = old
+            merged[positions[key]]["Reciente"] = new
+        else:
+            positions[key] = len(merged)
+            merged.append(dict(account))
+        applied += 1
+    return merged, applied
+
+
+def read_workbook_support(files):
+    support = {"checks": [], "indicators": [], "warnings": []}
+    for upload in files:
+        if upload.name.rsplit(".", 1)[-1].lower() not in ("xlsx", "xls"):
+            continue
+        try:
+            workbook = pd.read_excel(io.BytesIO(upload.getvalue()), sheet_name=None, header=None)
+        except (ValueError, OSError, zipfile.BadZipFile) as exc:
+            support["warnings"].append(f"{upload.name}: no se pudieron leer las hojas auxiliares ({exc}).")
+            continue
+
+        for sheet_name, sheet in workbook.items():
+            sheet_key = _norm(sheet_name)
+            if "comprobacion" in sheet_key:
+                sheet_type = "checks"
+            elif "indicador" in sheet_key:
+                sheet_type = "indicators"
+            else:
+                continue
+
+            header_index = None
+            headers = []
+            for index, row in sheet.iterrows():
+                candidate = ["" if pd.isna(value) else str(value).strip() for value in row.tolist()]
+                candidate_keys = [_norm(value) for value in candidate]
+                has_label = candidate_keys and candidate_keys[0] in {"concepto", "indicador"}
+                period_columns = [
+                    i for i, value in enumerate(candidate_keys)
+                    if i and (
+                        re.search(r"\b(?:19|20)\d{2}\b", value)
+                        or value in {"anterior", "reciente", "actual"}
+                    )
+                ]
+                if has_label and len(period_columns) >= 2:
+                    header_index, headers = index, candidate
+                    break
+
+            if header_index is None:
+                support["warnings"].append(
+                    f"{upload.name}, hoja {sheet_name}: no se encontró el encabezado de periodos."
+                )
+                continue
+
+            period_columns = [
+                i for i, value in enumerate(headers)
+                if i and (
+                    re.search(r"\b(?:19|20)\d{2}\b", _norm(value))
+                    or _norm(value) in {"anterior", "reciente", "actual"}
+                )
+            ][:2]
+            variation_column = next(
+                (i for i, value in enumerate(headers) if "variacion" in _norm(value)), None
+            )
+            state_column = next(
+                (i for i, value in enumerate(headers) if "estado" in _norm(value)), None
+            )
+            reading_column = next(
+                (i for i, value in enumerate(headers) if "lectura" in _norm(value)), None
+            )
+
+            for _, row in sheet.iloc[header_index + 1:].iterrows():
+                cells = row.tolist()
+                label = "" if not cells or pd.isna(cells[0]) else str(cells[0]).strip()
+                if not label or len(cells) <= max(period_columns):
+                    continue
+                old, recent = (_to_num(cells[i]) for i in period_columns)
+                if old is None or recent is None:
+                    continue
+                if sheet_type == "checks":
+                    state = ""
+                    if state_column is not None and state_column < len(cells) and not pd.isna(cells[state_column]):
+                        state = str(cells[state_column]).strip()
+                    support["checks"].append({
+                        "Archivo": upload.name,
+                        "Comprobación": label,
+                        "Anterior": old,
+                        "Reciente": recent,
+                        "Estado del archivo": state,
+                    })
+                else:
+                    variation = (
+                        _to_num(cells[variation_column])
+                        if variation_column is not None and variation_column < len(cells)
+                        else None
+                    )
+                    reading = (
+                        str(cells[reading_column]).strip()
+                        if reading_column is not None
+                        and reading_column < len(cells)
+                        and not pd.isna(cells[reading_column])
+                        else ""
+                    )
+                    support["indicators"].append({
+                        "Archivo": upload.name,
+                        "Indicador": label,
+                        "Anterior": old,
+                        "Reciente": recent,
+                        "Variación": variation,
+                        "Lectura del archivo": reading,
+                    })
+    return support
+
+
+def validate_workbook_support(support, accounts):
+    df = clean_accounts(accounts)
+    periods = {period: totals(df, period) for period in ("Anterior", "Reciente")}
+
+    def account_value(name, period):
+        matching = df.loc[df["Concepto"].str.casefold() == name.casefold(), period]
+        return float(matching.sum()) if not matching.empty else 0.0
+
+    def derived_values(period):
+        current = periods[period]
+        sales = current["Ventas"]
+        returns = account_value("Devoluciones sobre ventas", period)
+        selling_expenses = account_value("Gastos de venta", period)
+        admin_expenses = account_value("Gastos de administración", period)
+        other_income = account_value("Otros ingresos", period)
+        other_expenses = account_value("Otros gastos", period)
+        taxes = account_value("Impuestos a la utilidad", period)
+        gross = sales - returns - current["Costo de ventas"]
+        operating = (
+            gross - selling_expenses - admin_expenses + other_income - other_expenses
+        )
+        net = operating - current["Gastos por intereses"] - taxes
+        return {
+            "Activo circulante": current["Activo circulante"],
+            "Activo no circulante": current["Activo no circulante"],
+            "Activo total": current["Activo total"],
+            "Pasivo circulante": current["Pasivo circulante"],
+            "Pasivo no circulante": current["Pasivo no circulante"],
+            "Pasivo total": current["Pasivo total"],
+            "Capital contable": current["Capital total"],
+            "Pasivo total + Capital contable": current["Pasivo más capital"],
+            "Diferencia (Activo total − Pasivo − Capital)": (
+                current["Activo total"] - current["Pasivo más capital"]
+            ),
+            "Utilidad bruta calculada (Ventas − Devoluciones − Costo)": gross,
+            "Utilidad bruta en Datos": current["Utilidad bruta"],
+            "Diferencia utilidad bruta": gross - current["Utilidad bruta"],
+            "Utilidad operativa calculada": operating,
+            "Utilidad operativa en Datos": current["Utilidad operativa"],
+            "Diferencia utilidad operativa": operating - current["Utilidad operativa"],
+            "Utilidad neta calculada": net,
+            "Utilidad neta en Datos": current["Utilidad neta"],
+            "Diferencia utilidad neta": net - current["Utilidad neta"],
+            "Diferencia Resultado del ejercicio − Utilidad neta": (
+                account_value("Resultado del ejercicio", period) - current["Utilidad neta"]
+            ),
+        }
+
+    check_values = {
+        period: {_norm(label): value for label, value in derived_values(period).items()}
+        for period in periods
+    }
+
+    def close(actual, expected, tolerance=0.01):
+        return abs(actual - expected) <= max(tolerance, abs(expected) * 1e-9)
+
+    checks = []
+    for check in support["checks"]:
+        key = _norm(check["Comprobación"])
+        expected_old = check_values["Anterior"].get(key)
+        expected_recent = check_values["Reciente"].get(key)
+        state = _norm(check["Estado del archivo"])
+        state_ok = not state or state in {"ok", "correcto", "correcta", "cuadra", "cuadrado"}
+        if expected_old is None or expected_recent is None:
+            validation = "Sin cotejo"
+        elif (
+            close(check["Anterior"], expected_old)
+            and close(check["Reciente"], expected_recent)
+            and state_ok
+        ):
+            validation = "Coincide"
+        else:
+            validation = "Revisar"
+        checks.append({**check, "Cotejo FINOVA": validation})
+
+    def indicator_values(period):
+        current = periods[period]
+        sales = current["Ventas"]
+        short_debt = account_value("Préstamos bancarios a corto plazo", period)
+        long_debt = account_value("Préstamos bancarios a largo plazo", period)
+        return {
+            "razon circulante veces": (
+                current["Activo circulante"] / current["Pasivo circulante"]
+                if current["Pasivo circulante"] else 0.0
+            ),
+            "efectivo caja bancos": current["Efectivo"],
+            "clientes": account_value("Clientes", period),
+            "inventarios": account_value("Inventarios", period),
+            "deuda bancaria total": short_debt + long_debt,
+            "prestamos a corto plazo": short_debt,
+            "ventas": sales,
+            "costo de ventas ventas": current["Costo de ventas"] / sales if sales else 0.0,
+            "margen bruto utilidad bruta ventas": current["Utilidad bruta"] / sales if sales else 0.0,
+            "devoluciones ventas": (
+                account_value("Devoluciones sobre ventas", period) / sales if sales else 0.0
+            ),
+            "margen operativo": current["Utilidad operativa"] / sales if sales else 0.0,
+            "margen neto": current["Utilidad neta"] / sales if sales else 0.0,
+            "gastos por intereses": current["Gastos por intereses"],
+        }
+
+    expected_indicators = {
+        period: indicator_values(period) for period in periods
+    }
+    ratio_keys = {
+        "razon circulante veces", "costo de ventas ventas",
+        "margen bruto utilidad bruta ventas", "devoluciones ventas",
+        "margen operativo", "margen neto",
+    }
+    indicators = []
+    for indicator in support["indicators"]:
+        key = _norm(indicator["Indicador"])
+        old_value = expected_indicators["Anterior"].get(key)
+        recent_value = expected_indicators["Reciente"].get(key)
+        if old_value is None or recent_value is None:
+            validation = "Sin cotejo"
+        else:
+            variation = (
+                recent_value - old_value if key in ratio_keys
+                else (recent_value - old_value) / abs(old_value) if old_value else 0.0
+            )
+            tolerance = 1e-6 if key in ratio_keys else 0.01
+            source_variation = indicator["Variación"]
+            validation = (
+                "Coincide"
+                if close(indicator["Anterior"], old_value, tolerance)
+                and close(indicator["Reciente"], recent_value, tolerance)
+                and source_variation is not None
+                and close(source_variation, variation, 1e-6)
+                else "Revisar"
+            )
+        indicators.append({**indicator, "Cotejo FINOVA": validation})
+
+    return {**support, "checks": checks, "indicators": indicators}
+
+
+def import_draft_uploads(upload_key):
+    uploads = st.session_state.get(upload_key) or []
+    if not uploads:
+        return False
+
+    upload_errors = [error for error in (validate_upload(upload) for upload in uploads) if error]
+    if upload_errors:
+        st.session_state.draft_import_feedback = {
+            "error": " ".join(upload_errors),
+            "unknown": [],
+            "warnings": [],
+        }
+        return False
+
+    imported, n_found, unknown, warns = extract_accounts(uploads)
+    if not n_found:
+        st.session_state.draft_import_feedback = {
+            "error": "No se encontraron cuentas reconocibles en los archivos. "
+                     "Verifica que incluyan nombres de cuentas y sus saldos.",
+            "unknown": unknown[:5],
+            "warnings": warns[:5],
+        }
+        return False
+
+    existing = st.session_state.get("draft_accounts", base_accounts())
+    merged, applied = merge_imported_accounts(existing, imported)
+    support = validate_workbook_support(
+        read_workbook_support(uploads), imported)
+    st.session_state.draft_accounts = merged
+    st.session_state.draft_workbook_support = support
+    st.session_state.draft_edit_version = st.session_state.get("draft_edit_version", 0) + 1
+    st.session_state.draft_import_feedback = {
+        "found": n_found,
+        "applied": applied,
+        "missing": max(0, len(imported) - n_found),
+        "unknown": unknown[:5],
+        "warnings": warns[:5],
+    }
+    return True
+
 
 def totals(df, period):
     """Totales calculados desde las cuentas individuales; evita sumar totales duplicados."""
@@ -964,6 +1541,328 @@ def totals(df, period):
     result["Gastos por intereses"] = account("Gastos por intereses")
     result["Efectivo"] = result["Caja"] + result["Bancos"]
     return result
+
+
+def intelligent_recommendations(df, old_totals, new_totals, currency="MXN"):
+    """Genera recomendaciones transparentes a partir de cambios en cuentas y totales."""
+    recommendations = []
+    old_sales, sales = old_totals["Ventas"], new_totals["Ventas"]
+    old_assets, assets = old_totals["Activo total"], new_totals["Activo total"]
+    old_liabilities, liabilities = old_totals["Pasivo total"], new_totals["Pasivo total"]
+    materiality = max(1.0, max(abs(assets), abs(sales), abs(liabilities)) * 0.01)
+
+    def amount(value):
+        return money(value, currency)
+
+    def growth(old_value, new_value):
+        if abs(old_value) < 0.01:
+            return None
+        return (new_value - old_value) / abs(old_value) * 100
+
+    def trend(old_value, new_value):
+        pct = growth(old_value, new_value)
+        if pct is None:
+            return f"pasó de {amount(old_value)} a {amount(new_value)}"
+        return f"cambió de {amount(old_value)} a {amount(new_value)} ({pct:+.1f}%)"
+
+    def add(priority, title, detection, importance, decision):
+        recommendations.append({
+            "Prioridad": priority,
+            "Recomendación": title,
+            "Qué detectó": detection,
+            "Por qué importa": importance,
+            "Decisión sugerida": decision,
+        })
+
+    # La consistencia del balance debe verificarse antes de tomar decisiones.
+    balance_gaps = []
+    for label, totals_for_period in (("anterior", old_totals), ("reciente", new_totals)):
+        gap = totals_for_period["Activo total"] - totals_for_period["Pasivo más capital"]
+        if abs(gap) >= 0.01:
+            balance_gaps.append(f"periodo {label}: diferencia de {amount(gap)}")
+    if balance_gaps:
+        add(
+            "Atención", "Conciliar el balance antes de decidir",
+            "El balance no cuadra (" + "; ".join(balance_gaps) + ").",
+            "Un saldo mal clasificado o incompleto puede distorsionar liquidez, deuda y rentabilidad.",
+            "Revisar captura, clasificación y saldos de apertura; confirmar que activo = pasivo + capital.",
+        )
+
+    if sales > 0 and old_sales > 0 and sales < old_sales and old_sales - sales >= materiality:
+        add(
+            "Atención", "Recuperar ventas",
+            f"Las ventas {trend(old_sales, sales)}.",
+            "Una reducción relevante de ingresos puede presionar márgenes y flujo para cubrir costos fijos.",
+            "Identificar productos, clientes o canales que explican la caída y acordar acciones comerciales medibles.",
+        )
+    elif sales > old_sales and sales - old_sales >= materiality:
+        add(
+            "Oportunidad", "Aprovechar el crecimiento de ventas",
+            f"Las ventas {trend(old_sales, sales)}.",
+            "El crecimiento es sostenible solo si se convierte en margen y efectivo, no únicamente en saldos por cobrar.",
+            "Replicar los canales o productos que crecieron y monitorear su margen, cobranza y capacidad operativa.",
+        )
+
+    old_inventory, inventory = old_totals["Inventarios"], new_totals["Inventarios"]
+    sales_growth = growth(old_sales, sales)
+    inventory_growth = growth(old_inventory, inventory)
+    if inventory - old_inventory >= materiality and (
+        (sales_growth is not None and inventory_growth is not None and inventory_growth > sales_growth + 5)
+        or (sales_growth is None and sales <= materiality)
+        or (sales_growth is not None and sales_growth < 0)
+    ):
+        add(
+            "Atención", "Ajustar compras y niveles de inventario",
+            f"Inventarios {trend(old_inventory, inventory)}; las ventas {trend(old_sales, sales)}.",
+            "El inventario que crece más rápido que la venta inmoviliza recursos y puede elevar costos de almacenamiento u obsolescencia.",
+            "Revisar antigüedad y rotación por producto; reducir compras de lento movimiento y definir mínimos según demanda.",
+        )
+
+    old_receivables, receivables = old_totals["Clientes"], new_totals["Clientes"]
+    if (receivables - old_receivables >= materiality
+            and (sales - old_sales < 0 or receivables - old_receivables > max(0, sales - old_sales))):
+        add(
+            "Atención", "Acelerar la cobranza",
+            f"Clientes {trend(old_receivables, receivables)}, frente a ventas {trend(old_sales, sales)}.",
+            "El aumento de cuentas por cobrar absorbe efectivo y puede convertir ventas registradas en problemas de liquidez.",
+            "Priorizar saldos vencidos, confirmar fechas de pago y revisar límites de crédito y condiciones para nuevos pedidos.",
+        )
+    elif old_receivables - receivables >= materiality and sales >= old_sales:
+        add(
+            "Oportunidad", "Conservar la mejora en cobranza",
+            f"El saldo de clientes disminuyó de {amount(old_receivables)} a {amount(receivables)} mientras las ventas no bajaron.",
+            "Cobrar sin frenar ventas libera efectivo para la operación.",
+            "Mantener el seguimiento y las condiciones de crédito que produjeron la reducción del saldo.",
+        )
+
+    working_capital = new_totals["Capital de trabajo"]
+    current_liabilities = new_totals["Pasivo circulante"]
+    cash = new_totals["Efectivo"]
+    current_ratio = (
+        new_totals["Activo circulante"] / current_liabilities
+        if current_liabilities > 0 else None
+    )
+    cash_ratio = cash / current_liabilities if current_liabilities > 0 else None
+    if working_capital < 0 or (current_ratio is not None and current_ratio < 1):
+        add(
+            "Atención", "Proteger la liquidez de corto plazo",
+            f"Capital de trabajo de {amount(working_capital)}"
+            + (f" y razón circulante de {current_ratio:.2f}." if current_ratio is not None else "."),
+            "Los activos circulantes no cubren los compromisos de corto plazo, lo que puede dificultar pagos oportunos.",
+            "Preparar un calendario semanal de cobros y pagos; posponer desembolsos no esenciales y negociar plazos antes del vencimiento.",
+        )
+    elif current_liabilities > 0 and cash < current_liabilities * 0.2:
+        add(
+            "Atención", "Fortalecer la reserva de efectivo",
+            f"Caja y bancos suman {amount(cash)} frente a pasivos circulantes de {amount(current_liabilities)}"
+            + (f" (cobertura inmediata {cash_ratio:.2f})." if cash_ratio is not None else "."),
+            "Aunque otros activos circulantes puedan cubrir obligaciones en papel, no todos se convierten en efectivo de inmediato.",
+            "Proyectar entradas y salidas próximas, acelerar cobros y mantener una reserva para vencimientos prioritarios.",
+        )
+    if old_totals["Efectivo"] - cash >= materiality and old_totals["Efectivo"] > 0:
+        add(
+            "Atención", "Investigar la reducción de efectivo",
+            f"Caja y bancos {trend(old_totals['Efectivo'], cash)}.",
+            "Una reducción de efectivo puede anticipar presión para cubrir nómina, proveedores o deuda.",
+            "Conciliar movimientos de caja y bancos y calendarizar pagos con base en los cobros confirmados.",
+        )
+
+    if assets > 0:
+        debt_ratio = liabilities / assets
+        old_debt_ratio = old_liabilities / old_assets if old_assets > 0 else None
+        if debt_ratio >= 0.7:
+            add(
+                "Atención", "Contener el crecimiento de la deuda",
+                f"El pasivo representa {debt_ratio:.1%} del activo"
+                + (f", frente a {old_debt_ratio:.1%} en el periodo anterior." if old_debt_ratio is not None else "."),
+                "Una mayor dependencia de acreedores reduce el margen para absorber caídas de ingresos o alzas de tasas.",
+                "Evitar deuda nueva no esencial, revisar tasas y vencimientos, y priorizar el pago de las obligaciones más costosas.",
+            )
+        elif liabilities - old_liabilities >= materiality and (
+            assets - old_assets < liabilities - old_liabilities
+        ):
+            add(
+                "Atención", "Vincular nueva deuda con capacidad de pago",
+                f"El pasivo aumentó {amount(liabilities - old_liabilities)} y los activos crecieron menos.",
+                "La deuda que no se traduce en capacidad productiva o efectivo puede elevar el riesgo financiero.",
+                "Identificar el uso de los recursos y validar que el flujo esperado cubra capital e intereses antes de contratar más.",
+            )
+
+    short_loans = {"Préstamos bancarios a corto plazo"}
+    short_loan_old = float(df.loc[df["Concepto"].isin(short_loans), "Anterior"].sum())
+    short_loan_new = float(df.loc[df["Concepto"].isin(short_loans), "Reciente"].sum())
+    if short_loan_new - short_loan_old >= materiality:
+        add(
+            "Atención", "Revisar el vencimiento de préstamos de corto plazo",
+            f"Préstamos bancarios de corto plazo {trend(short_loan_old, short_loan_new)}; "
+            f"caja y bancos {trend(old_totals['Efectivo'], cash)}.",
+            "Un mayor saldo de deuda inmediata concentra vencimientos y puede presionar el efectivo disponible.",
+            "Armar un calendario de pagos y validar la cobertura con flujos previstos; negociar plazos antes del vencimiento.",
+        )
+
+    old_suppliers, suppliers = old_totals["Proveedores"], new_totals["Proveedores"]
+    supplier_change = suppliers - old_suppliers
+    if abs(supplier_change) >= materiality:
+        if supplier_change > 0:
+            add(
+                "Revisar", "Gestionar el saldo con proveedores",
+                f"Proveedores {trend(old_suppliers, suppliers)}.",
+                "El aumento de cuentas por pagar puede anticipar vencimientos concentrados o dependencia de crédito comercial.",
+                "Conciliar facturas y vencimientos; negociar un calendario sostenible sin perder descuentos por pronto pago.",
+            )
+        else:
+            add(
+                "Oportunidad", "Conservar la mejora con proveedores",
+                f"El saldo de proveedores bajó de {amount(old_suppliers)} a {amount(suppliers)}.",
+                "Una reducción relevante puede reflejar pagos oportunos, pero también consume efectivo.",
+                "Confirmar que el pago no haya debilitado la caja y conservar las condiciones comerciales favorables.",
+            )
+
+    expense_accounts = (
+        "Costo de ventas", "Gastos de venta", "Gastos de administración",
+        "Otros gastos", "Gastos por intereses", "Impuestos a la utilidad",
+    )
+    old_expenses = sum(float(df.loc[df["Concepto"] == name, "Anterior"].sum()) for name in expense_accounts)
+    expenses = sum(float(df.loc[df["Concepto"] == name, "Reciente"].sum()) for name in expense_accounts)
+    expense_increase = expenses - old_expenses
+    sales_increase = max(0.0, sales - old_sales)
+    expense_growth = growth(old_expenses, expenses)
+    expense_growth_outpaces_sales = (
+        sales_growth is None
+        or expense_growth is None
+        or expense_growth > sales_growth + 3
+        or expense_increase - sales_increase >= materiality
+    )
+    if expense_increase >= materiality and expense_growth_outpaces_sales:
+        main_expenses = sorted(
+            (
+                (name, float(df.loc[df["Concepto"] == name, "Reciente"].sum())
+                 - float(df.loc[df["Concepto"] == name, "Anterior"].sum()))
+                for name in expense_accounts
+            ),
+            key=lambda item: item[1], reverse=True
+        )
+        drivers = [f"{name} (+{amount(delta)})" for name, delta in main_expenses if delta > 0]
+        add(
+            "Atención", "Controlar costos y gastos",
+            f"Los costos y gastos incluidos aumentaron de {amount(old_expenses)} a {amount(expenses)}"
+            + (f"; mayores aumentos: {', '.join(drivers)}." if drivers else "."),
+            "Si el gasto crece más rápido que los ingresos, queda menos margen para operar e invertir.",
+            "Comparar cada aumento contra presupuesto, separar gastos recurrentes y renegociar compras o partidas no esenciales.",
+        )
+
+    gross_profit = new_totals["Utilidad bruta"]
+    operating_profit = new_totals["Utilidad operativa"]
+    net_profit = new_totals["Utilidad neta"]
+    if sales > 0 and new_totals["Costo de ventas"] > sales:
+        add(
+            "Atención", "Recuperar margen bruto",
+            f"El costo de ventas ({amount(new_totals['Costo de ventas'])}) supera las ventas ({amount(sales)}).",
+            "La actividad comercial no alcanza a cubrir el costo directo de lo vendido.",
+            "Validar costos y devoluciones; revisar precios, mezcla de productos y condiciones de compra antes de aumentar volumen.",
+        )
+    elif gross_profit < 0 and sales > 0:
+        add(
+            "Atención", "Revisar la rentabilidad de los productos",
+            f"La utilidad bruta reciente es {amount(gross_profit)} con ventas de {amount(sales)}.",
+            "Un margen bruto negativo indica que los ingresos no cubren los costos directos.",
+            "Analizar margen por producto y ajustar precio, costo de adquisición o catálogo según la demanda.",
+        )
+    elif (old_totals["Ventas"] > 0 and sales > 0
+          and old_totals["Utilidad bruta"] - gross_profit >= materiality):
+        old_gross_margin = old_totals["Utilidad bruta"] / old_totals["Ventas"] * 100
+        gross_margin = gross_profit / sales * 100
+        add(
+            "Atención", "Detener el deterioro del margen bruto",
+            f"La utilidad bruta bajó de {amount(old_totals['Utilidad bruta'])} a {amount(gross_profit)}; "
+            f"el margen pasó de {old_gross_margin:.1f}% a {gross_margin:.1f}%.",
+            "La empresa conserva menos ingreso después de cubrir el costo directo de sus ventas.",
+            "Revisar cambios en precios, mezcla de productos, devoluciones y costos de compra para recuperar margen.",
+        )
+    if operating_profit < 0:
+        add(
+            "Atención", "Corregir la pérdida operativa",
+            f"La utilidad operativa reciente es {amount(operating_profit)}.",
+            "La operación ordinaria no genera recursos suficientes antes de intereses e impuestos.",
+            "Priorizar acciones sobre los gastos operativos y líneas con margen negativo; dar seguimiento al resultado por periodo.",
+        )
+    if net_profit < 0:
+        add(
+            "Atención", "Detener la pérdida neta",
+            f"La utilidad neta reciente es {amount(net_profit)}.",
+            "Una pérdida sostenida consume capital y reduce la capacidad de financiar la operación.",
+            "Desglosar el efecto operativo, financiero y fiscal; aprobar medidas correctivas con responsables y fechas.",
+        )
+    elif old_totals["Utilidad neta"] > 0 and net_profit < old_totals["Utilidad neta"] - materiality:
+        add(
+            "Atención", "Investigar la caída de utilidad",
+            f"La utilidad neta bajó de {amount(old_totals['Utilidad neta'])} a {amount(net_profit)}.",
+            "Menos utilidad limita la reinversión y puede anticipar presión en caja.",
+            "Separar el cambio en ventas, costo, gastos e intereses para enfocar la corrección en sus principales causas.",
+        )
+
+    interest_change = new_totals["Gastos por intereses"] - old_totals["Gastos por intereses"]
+    interest_growth = growth(old_totals["Gastos por intereses"], new_totals["Gastos por intereses"])
+    if interest_change >= materiality or (
+        interest_change > 0 and interest_growth is not None
+        and sales_growth is not None and interest_growth > sales_growth + 3
+    ):
+        add(
+            "Atención", "Reducir el costo financiero",
+            f"Los gastos por intereses aumentaron de {amount(old_totals['Gastos por intereses'])} "
+            f"a {amount(new_totals['Gastos por intereses'])}.",
+            "Más intereses reducen directamente la utilidad y el efectivo disponible para la operación.",
+            "Comparar tasas y comisiones vigentes, revisar pagos anticipados viables y negociar condiciones con acreedores.",
+        )
+
+    old_assets_noncurrent = old_totals["Activo no circulante"]
+    assets_noncurrent = new_totals["Activo no circulante"]
+    noncurrent_growth = growth(old_assets_noncurrent, assets_noncurrent)
+    if (assets_noncurrent - old_assets_noncurrent >= materiality
+            and (sales_growth is None or noncurrent_growth is None or noncurrent_growth > sales_growth + 10)):
+        add(
+            "Oportunidad", "Aprovechar mejor los activos de largo plazo",
+            f"El activo no circulante {trend(old_assets_noncurrent, assets_noncurrent)}.",
+            "Una inversión que crece sin un avance proporcional en ventas puede dejar capacidad productiva subutilizada.",
+            "Medir utilización y rendimiento de los activos recientes antes de autorizar nuevas inversiones.",
+        )
+
+    specifically_reviewed = {
+        "Caja", "Bancos", "Clientes", "Inventarios", "Almacén", "Proveedores",
+        "Préstamos bancarios a corto plazo", *expense_accounts, "Ventas",
+        "Utilidad bruta", "Utilidad operativa", "Utilidad neta",
+    }
+    other_movements = df[
+        (~df["Concepto"].isin(specifically_reviewed))
+        & (df["Cambio"].abs() >= materiality)
+    ].copy()
+    other_movements = other_movements.reindex(
+        other_movements["Cambio"].abs().sort_values(ascending=False).index
+    )
+    for _, row in other_movements.iterrows():
+        delta = float(row["Cambio"])
+        category = row["Categoria"]
+        if category.startswith("Activo"):
+            importance = "El cambio modifica recursos comprometidos en activos y puede afectar la flexibilidad financiera."
+            decision = "Validar el origen, uso y rendimiento del saldo antes de asignar más recursos a esta cuenta."
+        elif category.startswith("Pasivo"):
+            importance = "El movimiento puede modificar compromisos y necesidades futuras de pago."
+            decision = "Confirmar su causa, vencimiento y costo; ajustar el calendario de pagos con base en el flujo previsto."
+        elif category == "Capital contable":
+            importance = "Los cambios de capital afectan el respaldo patrimonial y la capacidad de absorber pérdidas."
+            decision = "Conciliar aportaciones, retiros y resultados para confirmar que el movimiento esté autorizado y correctamente registrado."
+        else:
+            importance = "El movimiento puede cambiar el resultado del periodo y merece explicación frente al presupuesto."
+            decision = "Validar el soporte y su recurrencia; ajustar el presupuesto o la decisión operativa asociada."
+        direction = "aumentó" if delta > 0 else "disminuyó"
+        add(
+            "Revisar", f"Validar el movimiento de {row['Concepto']}",
+            f"{row['Concepto']} {direction} en {amount(abs(delta))} ({category}).",
+            importance,
+            decision,
+        )
+
+    return recommendations
 
 
 def classify_flow(row, overrides):
@@ -1040,7 +1939,285 @@ RATIO_DEFS = OrderedDict({
 })
 
 
-def calc_ratio(name, t, period_label):
+def ratio_recommendation(name, value, period_totals, currency="MXN"):
+    if value is None:
+        return {
+            "Qué detectó": "La razón no se pudo calcular porque su denominador es cero o falta información.",
+            "Por qué importa": "Sin un resultado válido no se puede evaluar esta dimensión financiera.",
+            "Decisión sugerida": "Completar y validar las cuentas que intervienen en la fórmula antes de tomar decisiones.",
+        }
+
+    unit = RATIO_DEFS[name][1]
+    displayed = money(value, currency) if unit == "moneda" else f"{value:,.2f} {unit}"
+    if name == "Razón circulante":
+        if value < 1:
+            return {
+                "Qué detectó": f"Hay {value:.2f} de activo circulante por cada peso de pasivo circulante.",
+                "Por qué importa": "La cobertura contable de corto plazo es menor que las obligaciones registradas.",
+                "Decisión sugerida": "Calendarizar cobros y pagos, acelerar cobranza y negociar vencimientos antes de adquirir deuda nueva.",
+            }
+        return {
+            "Qué detectó": f"El activo circulante equivale a {value:.2f} veces el pasivo circulante.",
+            "Por qué importa": "La cobertura total no confirma que los activos sean líquidos ni que estén disponibles al vencimiento.",
+            "Decisión sugerida": "Revisar antigüedad de clientes e inventarios y cotejar fechas de cobro con vencimientos.",
+        }
+    if name == "Prueba ácida":
+        if value < 1:
+            return {
+                "Qué detectó": f"Sin inventarios hay {value:.2f} de activo disponible por cada peso de pasivo circulante.",
+                "Por qué importa": "La empresa depende de vender inventario para cubrir compromisos de corto plazo.",
+                "Decisión sugerida": "Priorizar cobranza y efectivo; ajustar compras de lento movimiento y prever pagos próximos.",
+            }
+        return {
+            "Qué detectó": f"El activo circulante sin inventarios equivale a {value:.2f} veces el pasivo circulante.",
+            "Por qué importa": "La cobertura no depende por completo de vender existencias, pero los saldos por cobrar también deben ser cobrables.",
+            "Decisión sugerida": "Mantener el seguimiento de vencimientos y validar la recuperabilidad de clientes y otros activos circulantes.",
+        }
+    if name == "Razón de efectivo":
+        if value < 1:
+            return {
+                "Qué detectó": f"Caja y bancos cubren {value:.2f} veces el pasivo circulante.",
+                "Por qué importa": "El efectivo disponible por sí solo no alcanza para liquidar todos los pasivos de corto plazo.",
+                "Decisión sugerida": "Proyectar flujo semanal, asegurar cobros y reservar efectivo para nómina, impuestos y vencimientos prioritarios.",
+            }
+        return {
+            "Qué detectó": f"Caja y bancos cubren {value:.2f} veces el pasivo circulante.",
+            "Por qué importa": "Una cobertura alta brinda margen de pago, aunque mantener excedentes sin uso puede restar rendimiento.",
+            "Decisión sugerida": "Separar la reserva operativa y destinar excedentes solo después de confirmar pagos e inversiones necesarias.",
+        }
+    if name == "Capital de trabajo":
+        if value < 0:
+            return {
+                "Qué detectó": f"El capital de trabajo es negativo: {displayed}.",
+                "Por qué importa": "Los pasivos circulantes superan los activos circulantes y pueden presionar la operación diaria.",
+                "Decisión sugerida": "Reducir salidas no esenciales, acelerar cobranza y renegociar plazos para alinear pagos con entradas.",
+            }
+        return {
+            "Qué detectó": f"El capital de trabajo es positivo: {displayed}.",
+            "Por qué importa": "Este margen sostiene la operación, pero puede quedar inmovilizado en inventario o saldos vencidos.",
+            "Decisión sugerida": "Asignar el excedente a necesidades operativas prioritarias y vigilar rotación de inventario y cobranza.",
+        }
+    if name == "Endeudamiento":
+        if value >= 70:
+            return {
+                "Qué detectó": f"El pasivo financia {value:.2f}% del activo.",
+                "Por qué importa": "La alta dependencia de acreedores reduce el margen para absorber caídas de ingresos o alzas de tasas.",
+                "Decisión sugerida": "Limitar deuda no esencial, revisar vencimientos y tasas, y comparar el nivel con el sector y los contratos vigentes.",
+            }
+        return {
+            "Qué detectó": f"El pasivo financia {value:.2f}% del activo.",
+            "Por qué importa": "El porcentaje debe leerse junto con el costo, vencimiento y capacidad de pago de cada obligación.",
+            "Decisión sugerida": "Monitorear deuda y flujo previsto; antes de financiar inversiones, validar que generen recursos para pagarla.",
+        }
+    if name == "Autonomía financiera":
+        if period_totals["Capital total"] <= 0:
+            return {
+                "Qué detectó": f"La autonomía financiera es {value:.2f}% y el capital contable no es positivo.",
+                "Por qué importa": "La falta de respaldo patrimonial puede limitar crédito y capacidad para absorber pérdidas.",
+                "Decisión sugerida": "Conciliar pérdidas y aportaciones; preparar un plan de recuperación patrimonial antes de asumir nuevos compromisos.",
+            }
+        return {
+            "Qué detectó": f"El capital contable financia {value:.2f}% del activo.",
+            "Por qué importa": "Una base propia mayor reduce dependencia de acreedores, aunque su suficiencia depende del giro y riesgo del negocio.",
+            "Decisión sugerida": "Comparar con periodos y empresas del sector y conservar utilidades para inversiones con rendimiento comprobable.",
+        }
+    if name == "Deuda a capital":
+        if period_totals["Capital total"] <= 0:
+            return {
+                "Qué detectó": f"El capital contable es no positivo y la razón deuda a capital resulta {value:.2f}.",
+                "Por qué importa": "La razón deja de ser una comparación útil cuando el patrimonio es nulo o negativo.",
+                "Decisión sugerida": "Revisar pérdidas acumuladas y aportaciones; fortalecer capital y evaluar deuda con un flujo de pago realista.",
+            }
+        if value > 1:
+            return {
+                "Qué detectó": f"Hay {value:.2f} de pasivo por cada peso de capital contable.",
+                "Por qué importa": "La deuda supera el respaldo de los propietarios y aumenta la exposición financiera.",
+                "Decisión sugerida": "Priorizar obligaciones de mayor costo y evitar nuevos créditos salvo que su rendimiento y cobertura estén demostrados.",
+            }
+        return {
+            "Qué detectó": f"Hay {value:.2f} de pasivo por cada peso de capital contable.",
+            "Por qué importa": "La relación debe evaluarse junto con intereses, vencimientos y estabilidad del flujo.",
+            "Decisión sugerida": "Mantener un calendario de servicio de deuda y comparar esta relación con el sector.",
+        }
+    if name in {"Margen bruto", "Margen operativo", "Margen neto"}:
+        margin_type = {
+            "Margen bruto": ("bruto", "precios y costos directos por producto"),
+            "Margen operativo": ("operativo", "costos y gastos de operación"),
+            "Margen neto": ("neto", "costos, gastos, intereses e impuestos"),
+        }[name]
+        if value < 0:
+            return {
+                "Qué detectó": f"El margen {margin_type[0]} es negativo: {value:.2f}%.",
+                "Por qué importa": "Las ventas no están dejando el resultado positivo esperado en esta etapa del negocio.",
+                "Decisión sugerida": f"Desglosar ventas y partidas que forman el margen; corregir {margin_type[1]} antes de impulsar volumen.",
+            }
+        return {
+            "Qué detectó": f"El margen {margin_type[0]} es {value:.2f}%.",
+            "Por qué importa": "El porcentaje muestra cuánto de cada venta queda en esta etapa y puede erosionarse con cambios de mezcla o costos.",
+            "Decisión sugerida": f"Dar seguimiento por producto y periodo y controlar {margin_type[1]} contra presupuesto.",
+        }
+    if name == "ROA":
+        if value < 0:
+            return {
+                "Qué detectó": f"El rendimiento sobre activos es negativo: {value:.2f}%.",
+                "Por qué importa": "Los activos no están generando utilidad neta en el periodo medido.",
+                "Decisión sugerida": "Identificar activos o líneas con bajo rendimiento y corregir margen y utilización antes de ampliar capacidad.",
+            }
+        return {
+            "Qué detectó": f"El rendimiento sobre activos es {value:.2f}%.",
+            "Por qué importa": "Mide el resultado obtenido con los recursos invertidos y debe compararse con periodos y sector.",
+            "Decisión sugerida": "Revisar productividad de activos y priorizar inversiones cuyo rendimiento esperado supere su costo.",
+        }
+    if name == "ROE":
+        if period_totals["Capital total"] <= 0:
+            return {
+                "Qué detectó": f"El capital contable no es positivo; el ROE de {value:.2f}% puede ser engañoso.",
+                "Por qué importa": "Con patrimonio nulo o negativo, el rendimiento sobre capital no representa un retorno normal para los propietarios.",
+                "Decisión sugerida": "Validar el patrimonio y las pérdidas acumuladas; no usar el ROE aislado para autorizar dividendos o deuda.",
+            }
+        if value < 0:
+            return {
+                "Qué detectó": f"El rendimiento sobre capital es negativo: {value:.2f}%.",
+                "Por qué importa": "El resultado del periodo reduce el retorno para los propietarios y puede debilitar el patrimonio.",
+                "Decisión sugerida": "Separar las causas de la pérdida y acordar medidas de recuperación con responsables y fechas.",
+            }
+        return {
+            "Qué detectó": f"El rendimiento sobre capital es {value:.2f}%.",
+            "Por qué importa": "El retorno debe interpretarse junto con el riesgo y el nivel de deuda.",
+            "Decisión sugerida": "Comparar con periodos y sector y confirmar que el resultado provenga de operación sostenible, no de apalancamiento excesivo.",
+        }
+    if name == "Rotación de activos":
+        return {
+            "Qué detectó": f"Las ventas equivalen a {value:.2f} veces el activo total.",
+            "Por qué importa": "La rotación indica cuánto ingreso se obtiene de los activos, pero depende del giro y del periodo.",
+            "Decisión sugerida": "Comparar con el historial y el sector; identificar activos subutilizados y mejorar su uso antes de invertir en nuevos.",
+        }
+    if name == "Rotación de inventarios":
+        return {
+            "Qué detectó": f"El costo de ventas equivale a {value:.2f} veces el inventario.",
+            "Por qué importa": "Una rotación lenta puede inmovilizar efectivo y aumentar riesgo de obsolescencia; la adecuada depende del ciclo del producto.",
+            "Decisión sugerida": "Revisar antigüedad y rotación por producto y ajustar compras y niveles mínimos a la demanda y tiempos de reposición.",
+        }
+    if name == "Rotación de cuentas por cobrar":
+        return {
+            "Qué detectó": f"Las ventas equivalen a {value:.2f} veces el saldo de clientes.",
+            "Por qué importa": "Una cobranza lenta absorbe efectivo; una comparación anual puede estar distorsionada si hay saldos finales en lugar de promedios.",
+            "Decisión sugerida": "Comparar con los plazos de crédito y antigüedad de saldos; dar seguimiento a vencidos sin frenar ventas rentables.",
+        }
+    if name == "Rotación de proveedores":
+        return {
+            "Qué detectó": f"El costo de ventas equivale a {value:.2f} veces el saldo de proveedores.",
+            "Por qué importa": "El indicador aproxima la velocidad de pago, pero el costo de ventas no sustituye las compras netas.",
+            "Decisión sugerida": "Conciliar compras y vencimientos; pagar según flujo y preservar descuentos sin deteriorar la relación comercial.",
+        }
+    if name == "Cobertura de intereses":
+        if value < 1:
+            return {
+                "Qué detectó": f"La utilidad operativa cubre {value:.2f} veces los gastos por intereses.",
+                "Por qué importa": "La operación no genera suficiente resultado para cubrir el costo financiero del periodo.",
+                "Decisión sugerida": "Negociar tasas o plazos, frenar deuda nueva no esencial y corregir gastos o márgenes que reducen la utilidad operativa.",
+            }
+        return {
+            "Qué detectó": f"La utilidad operativa cubre {value:.2f} veces los gastos por intereses.",
+            "Por qué importa": "La cobertura puede reducirse si caen ventas, suben tasas o vencen créditos.",
+            "Decisión sugerida": "Mantener una proyección de servicio de deuda y probar escenarios de menor venta o mayor costo financiero.",
+        }
+    if name == "Solidez":
+        if value < 1:
+            return {
+                "Qué detectó": f"Hay {value:.2f} de activo por cada peso de pasivo.",
+                "Por qué importa": "El activo contable es menor que las obligaciones y aumenta el riesgo de solvencia.",
+                "Decisión sugerida": "Conciliar pasivos y activos recuperables, proteger flujo y acordar un plan de reducción o reestructura de deuda.",
+            }
+        return {
+            "Qué detectó": f"Hay {value:.2f} de activo por cada peso de pasivo.",
+            "Por qué importa": "La cobertura patrimonial no garantiza que los activos puedan convertirse en efectivo a tiempo.",
+            "Decisión sugerida": "Validar valor y liquidez de activos y planear pagos por vencimiento antes de comprometer recursos.",
+        }
+    return {
+        "Qué detectó": f"Los activos no circulantes representan {value:.2f}% del activo total.",
+        "Por qué importa": "Una mayor inversión de largo plazo reduce flexibilidad inmediata; el nivel adecuado depende del giro.",
+        "Decisión sugerida": "Comparar con el sector y medir utilización y rendimiento antes de aprobar nuevas inversiones de largo plazo.",
+    }
+
+
+def enrich_ratio_recommendations(ratios, old_totals, new_totals, currency="MXN"):
+    for ratio in ratios:
+        recommendation = ratio.pop("Análisis inteligente", None)
+        if not isinstance(ratio.get("Recomendación"), dict):
+            period_totals = old_totals if ratio.get("Periodo") == "Anterior" else new_totals
+            ratio["Recomendación"] = recommendation or ratio_recommendation(
+                ratio["Razón"], ratio.get("Resultado"), period_totals, currency)
+    return ratios
+
+
+def decision_destination(recommendation):
+    title = recommendation["Recomendación"].casefold()
+    statement_keywords = (
+        "balance", "venta", "margen", "utilidad", "pérdida",
+        "costo", "gasto", "rentabilidad",
+    )
+    if any(keyword in title for keyword in statement_keywords):
+        return "Estados financieros"
+    return "Hoja verde"
+
+
+def decision_highlight_context(recommendation, df):
+    if recommendation.get("Indicador"):
+        return [], []
+
+    text = _norm(
+        f"{recommendation['Recomendación']} {recommendation['Qué detectó']}"
+    )
+    words = set(text.split())
+    stop_words = {"a", "al", "de", "del", "el", "la", "las", "los", "por", "y"}
+    accounts = []
+    for concept in df["Concepto"]:
+        concept_words = set(_norm(concept).split()) - stop_words
+        if concept_words and concept_words.issubset(words):
+            accounts.append(concept)
+
+    labels = list(accounts)
+    title = _norm(recommendation["Recomendación"])
+    if not accounts:
+        if "balance" in title:
+            labels.extend([
+                "Total activo", "Total pasivo", "Total capital contable",
+                "Total pasivo + capital contable",
+            ])
+        elif any(term in title for term in ("liquidez", "efectivo", "capital de trabajo")):
+            current_accounts = df[df["Categoria"].isin(
+                ["Activo circulante", "Pasivo circulante"]
+            )]["Concepto"].tolist()
+            accounts.extend(current_accounts)
+            labels.extend(current_accounts)
+            labels.extend(["Total activo circulante", "Total pasivo circulante"])
+        elif any(term in title for term in ("deuda", "prestamo", "vencimiento")):
+            liability_accounts = df[df["Categoria"].str.startswith("Pasivo")]["Concepto"].tolist()
+            accounts.extend(liability_accounts)
+            labels.extend(liability_accounts)
+            labels.append("Total pasivo")
+        elif any(term in title for term in ("activo", "inversion")):
+            asset_accounts = df[df["Categoria"] == "Activo no circulante"]["Concepto"].tolist()
+            accounts.extend(asset_accounts)
+            labels.extend(asset_accounts)
+
+    return list(dict.fromkeys(accounts)), list(dict.fromkeys(labels))
+
+
+def highlight_decision_values(value):
+    safe_value = esc(value)
+    pattern = re.compile(
+        r"(?<![\w])(?:MXN\s*)?\$?[-+]?\d[\d,]*(?:\.\d+)?%?(?![\w])",
+        re.IGNORECASE,
+    )
+    return pattern.sub(
+        lambda match: f'<mark class="decision-value">{match.group(0)}</mark>',
+        safe_value,
+    )
+
+
+def calc_ratio(name, t, period_label, currency="MXN"):
     formulas = {
         "Razón circulante": (t["Activo circulante"], t["Pasivo circulante"]),
         "Prueba ácida": (t["Activo circulante"] - t["Inventarios"], t["Pasivo circulante"]),
@@ -1101,7 +2278,7 @@ def calc_ratio(name, t, period_label):
         else:
             interpretation = f"El indicador es {value:.2f} veces. Compáralo con periodos anteriores y con empresas del mismo sector."
 
-    return {
+    result = {
         "Razón": name,
         "Periodo": period_label,
         "Fórmula": RATIO_DEFS[name][0],
@@ -1111,6 +2288,7 @@ def calc_ratio(name, t, period_label):
         "Interpretación": interpretation,
         "Resultado mostrado": display
     }
+    return result
 
 
 def make_pdf(record, sheet, ratios, totals_recent):
@@ -1186,7 +2364,7 @@ def make_pdf(record, sheet, ratios, totals_recent):
                 Paragraph(f"Sustitución: {r['Sustitución']}", styles["Normal"]),
                 Paragraph(f"Resultado: {r['Resultado mostrado']}", styles["Normal"]),
                 Paragraph(f"Interpretación: {r['Interpretación']}", styles["Normal"]),
-                Spacer(1, 6)
+                Spacer(1, 6),
             ]))
     story.extend([Spacer(1, 18), signature_block(record)])
     story.extend([
@@ -1269,7 +2447,7 @@ if st.session_state.current_folio and not active:
 
 NAV = [
     ("Análisis", [("Panel", "dashboard"), ("Nuevo análisis", "note_add"), ("Consulta por folio", "search")]),
-    ("Resultados", [("Estados financieros", "account_balance"), ("Hoja verde", "table_view"),
+    ("Resultados", [("Decisiones", "checklist"), ("Estados financieros", "account_balance"), ("Hoja verde", "table_view"),
                     ("Razones financieras", "percent"), ("Gráficas", "bar_chart"),
                     ("Reporte gerencial", "description")]),
     ("Control", [("Documentos", "folder_open"), ("Solicitudes de cambio", "edit_note")]),
@@ -1363,6 +2541,7 @@ if page == "Panel":
     else:
         st.subheader("Flujo de trabajo")
         tiles = [
+            ("checklist", "Decisiones", "Acciones prioritarias y acceso al área que debes revisar."),
             ("file-plus", "Nuevo análisis", "Captura y compara dos balances."),
             ("table", "Hoja verde", "Orígenes, aplicaciones y variaciones."),
             ("percent", "Razones financieras", "Liquidez, deuda y rentabilidad."),
@@ -1554,13 +2733,17 @@ elif page == "Nuevo análisis":
                                 "leídos sean correctos y, si hay un error, solicita el cambio.")
                     if unknown:
                         msg += f" No se reconocieron {len(unknown)} renglón(es), p. ej.: {', '.join(unknown[:3])}."
-                    st.session_state.flash_warn = abs(gap) >= 0.01 or bool(unknown)
+                    if warns:
+                        msg += f" Avisos de lectura ({len(warns)}): {'; '.join(warns[:2])}"
+                    st.session_state.flash_warn = abs(gap) >= 0.01 or bool(unknown) or bool(warns)
                     st.session_state.page = "Estados financieros"
                 else:
                     folio = save_new_analysis(clean_accounts(base_accounts()), uploads, doc_kind,
                                               pending_capture=True, note="No se pudieron leer saldos.")
                     msg = ("No se pudieron leer saldos del archivo (puede ser un PDF escaneado o una imagen). "
                            "Se guardó y el administrador capturará los saldos.")
+                    if warns:
+                        msg += f" Avisos de lectura ({len(warns)}): {'; '.join(warns[:2])}"
                     st.session_state.flash_warn = True
                     st.session_state.page = "Documentos"
                 st.session_state.upl_n = upl_n + 1
@@ -1574,8 +2757,8 @@ elif page == "Nuevo análisis":
       f'<span class="chip">{esc(st.session_state.draft_old_date)} → {esc(st.session_state.draft_new_date)}</span>'
       f'<span class="chip">{esc(st.session_state.draft_currency)}</span>'
       f'<span class="chip">Elaboró: {esc(user["username"])}</span></div>')
-    st.info("Sube tu archivo de estados financieros (Excel, CSV, PDF con texto o Word). "
-        "El sistema leerá los saldos y generará los estados automáticamente. "
+    st.info("Sube tu archivo de estados financieros (Excel, CSV, PDF con texto o Word); "
+        "al adjuntarlo se leerán los importes automáticamente. Revisa los saldos antes de guardar. "
         "Después no podrás modificar cantidades: cualquier corrección se solicita al administrador.")
 
     if "draft_accounts" not in st.session_state:
@@ -1603,8 +2786,9 @@ elif page == "Nuevo análisis":
         with st.expander(category, expanded=(category == "Activo circulante")):
             all_df = pd.DataFrame(st.session_state.draft_accounts)
             sub = all_df[all_df["Categoria"] == category][["Concepto", "Anterior", "Reciente"]].copy()
+            edit_version = st.session_state.get("draft_edit_version", 0)
             edited = st.data_editor(
-                sub, key="edit_" + category, num_rows="dynamic",
+                sub, key=f"edit_{category}_{edit_version}", num_rows="dynamic",
                 **STRETCH, hide_index=True,
                 column_config={
                     "Concepto": st.column_config.TextColumn("Concepto", required=True),
@@ -1634,14 +2818,51 @@ elif page == "Nuevo análisis":
     st.divider()
     upl_n = st.session_state.get("upl_n", 0)
     st.subheader("Documentos de respaldo")
-    st.caption(f"Opcional: adjunta los estados financieros en PDF u otros archivos (máx. {MAX_MB} MB c/u).")
+    st.caption(f"Adjunta los estados financieros para importarlos y guardarlos (máx. {MAX_MB} MB c/u).")
     doc_kind = st.selectbox("Tipo de documento", DOC_KINDS, key=f"draft_kind_{upl_n}")
-    uploads = st.file_uploader("Archivos", accept_multiple_files=True, type=sorted(ALLOWED_EXT), key=f"draft_files_{upl_n}")
+    upload_key = f"draft_files_{upl_n}"
+    uploads = st.file_uploader(
+        "Archivos", accept_multiple_files=True, type=sorted(ALLOWED_EXT),
+        key=upload_key, on_change=import_draft_uploads, args=(upload_key,))
+    if st.button("Leer saldos de archivo", key=f"read_draft_accounts_{upl_n}", disabled=not uploads):
+        if import_draft_uploads(upload_key):
+            st.rerun()
+
+    feedback = st.session_state.pop("draft_import_feedback", None)
+    if feedback:
+        if feedback.get("error"):
+            st.error(feedback["error"])
+        else:
+            st.success(f"Se identificaron {feedback['found']} cuentas y se aplicaron saldos "
+                       f"a {feedback['applied']}. {feedback['missing']} cuentas del catálogo no "
+                       "aparecen en el archivo y quedan sin saldo; no se inventaron importes.")
+        if feedback.get("unknown"):
+            st.warning("Conceptos no reconocidos: " + ", ".join(feedback["unknown"]))
+        for warning in feedback.get("warnings", []):
+            st.warning(warning)
+
+    support = st.session_state.get("draft_workbook_support")
+    if support and (support["checks"] or support["indicators"] or support["warnings"]):
+        checked = sum(row["Cotejo FINOVA"] == "Coincide" for row in support["checks"])
+        compared = sum(row["Cotejo FINOVA"] == "Coincide" for row in support["indicators"])
+        with st.expander("Comprobaciones e indicadores del archivo"):
+            st.caption(
+                f"Comprobaciones conciliadas: {checked} de {len(support['checks'])}. "
+                f"Indicadores que coinciden con FINOVA: {compared} de {len(support['indicators'])}."
+            )
+            if support["checks"]:
+                st.dataframe(pd.DataFrame(support["checks"]), **STRETCH, hide_index=True)
+            if support["indicators"]:
+                st.dataframe(pd.DataFrame(support["indicators"]), **STRETCH, hide_index=True)
+            for warning in support["warnings"]:
+                st.warning(warning)
+
     filled = sum(1 for x in st.session_state.draft_accounts if x["Anterior"] or x["Reciente"])
     H(f'<div class="chips"><span class="chip"><b>{filled}</b> de {len(st.session_state.draft_accounts)} cuentas con saldo aplicado</span></div>')
+
     confirm_lock = st.checkbox(
         "Confirmo que revisé los saldos. Entiendo que, una vez guardado, solo el administrador puede modificar los estados financieros.",
-        key=f"confirm_lock_{upl_n}")
+        key=f"confirm_lock_{upl_n}_{st.session_state.get('draft_edit_version', 0)}")
     if st.button("Generar hoja verde y guardar análisis", type="primary", disabled=not confirm_lock):
         df = clean_accounts(st.session_state.draft_accounts)
         upload_errors = [e for e in (validate_upload(u) for u in (uploads or [])) if e]
@@ -1663,7 +2884,7 @@ elif page == "Nuevo análisis":
 
 # --------------------------- Cargar análisis actual ---------------------------
 
-elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráficas", "Reporte gerencial", "Documentos", "Editar estados"]:
+elif page in ["Decisiones", "Estados financieros", "Hoja verde", "Razones financieras", "Gráficas", "Reporte gerencial", "Documentos", "Editar estados"]:
     folio = st.session_state.get("current_folio")
     record = analysis_for(folio, user)
     if not record:
@@ -1684,8 +2905,13 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
     new_totals = totals(df, "Reciente")
     cur = record["currency"]
 
-    page_header(record["company"],
-                f"Folio {record['folio']} · {record['old_date']} → {record['new_date']} · {cur}", page)
+    if page == "Decisiones":
+        page_header("Decisiones a tomar",
+                    f"{record['company']} · Folio {record['folio']} · {record['old_date']} → {record['new_date']}",
+                    "Decisiones")
+    else:
+        page_header(record["company"],
+                    f"Folio {record['folio']} · {record['old_date']} → {record['new_date']} · {cur}", page)
     if not (df["Anterior"].abs().sum() or df["Reciente"].abs().sum()) and page != "Editar estados":
         if is_admin:
             st.warning("Este análisis aún no tiene saldos. Captúralos en «Editar estados» "
@@ -1693,8 +2919,283 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
         else:
             st.info("Tu archivo fue recibido. El administrador capturará los saldos y cuando termine "
                     "verás aquí los resultados.")
+    decision_focus_accounts = st.session_state.pop("decision_focus_accounts", [])
+    decision_focus_labels = set(st.session_state.pop("decision_focus_labels", []))
+    decision_focus_ratio = st.session_state.pop("decision_focus_ratio", None)
+    decision_focus_period = st.session_state.pop("decision_focus_period", None)
+    decision_focus_tab = st.session_state.pop("decision_focus_tab", None)
+    decision_scroll_to_source = st.session_state.pop("decision_scroll_to_source", False)
+
+    if page == "Decisiones":
+        decisions = intelligent_recommendations(df, old_totals, new_totals, cur)
+        ratios = enrich_ratio_recommendations(
+            json.loads(record["ratios_json"] or "[]"), old_totals, new_totals, cur)
+        for ratio in ratios:
+            advice = ratio["Recomendación"]
+            decisions.append({
+                "Prioridad": "Revisar",
+                "Recomendación": f"{ratio['Razón']} · {ratio['Periodo']}",
+                "Qué detectó": advice["Qué detectó"],
+                "Por qué importa": advice["Por qué importa"],
+                "Decisión sugerida": advice["Decisión sugerida"],
+                "Sección": "Razones financieras",
+                "Fuente": "Razón financiera",
+                "Indicador": ratio["Razón"],
+                "Valor clave": ratio.get("Resultado mostrado", "No calculable"),
+                "Periodo": ratio["Periodo"],
+            })
+        for decision in decisions:
+            decision.setdefault("Sección", decision_destination(decision))
+            decision.setdefault("Fuente", "Variaciones y saldos")
+            decision["Cuentas foco"], decision["Etiquetas foco"] = decision_highlight_context(
+                decision, df
+            )
+
+        attention_count = sum(item["Prioridad"] == "Atención" for item in decisions)
+        review_count = sum(item["Prioridad"] == "Revisar" for item in decisions)
+        opportunity_count = sum(item["Prioridad"] == "Oportunidad" for item in decisions)
+        H(
+            '<section class="decision-hero" aria-label="Resumen del centro de decisiones">'
+            '<div class="decision-hero-copy">'
+            '<span class="decision-hero-label">Tu mapa de acción · '
+            f'{esc(record["company"])}</span>'
+            '<h2>De la señal a la acción</h2>'
+            '<p>Atiende primero las alertas rojas, valida las amarillas y convierte las verdes en oportunidades.</p>'
+            '</div>'
+            '<div class="decision-hero-total"><strong>'
+            f'{len(decisions)}</strong><span>puntos<br>detectados</span></div></section>'
+        )
+        status_summaries = (
+            ("Atención", attention_count, "Actúa primero", "danger", "!"),
+            ("Revisar", review_count, "Valida antes de decidir", "review", "?"),
+            ("Oportunidad", opportunity_count, "Impulsa lo que funciona", "good", "✓"),
+        )
+        status_cards = "".join(
+            f'<article class="decision-stat {tone}"><span class="decision-stat-mark">{mark}</span>'
+            f'<div class="decision-stat-copy"><span>{esc(label)}</span><strong>{count}</strong>'
+            f'<small>{esc(hint)}</small></div></article>'
+            for label, count, hint, tone, mark in status_summaries
+        )
+        H(f'<div class="decision-stat-grid" aria-label="Resumen por prioridad">{status_cards}</div>')
+        filter_labels = {
+            "Todas": f"Todas · {len(decisions)}",
+            "Atención": f"Atención · {attention_count}",
+            "Revisar": f"Revisar · {review_count}",
+            "Oportunidad": f"Oportunidad · {opportunity_count}",
+        }
+        priority_filter = st.segmented_control(
+            "Filtrar por prioridad",
+            options=list(filter_labels),
+            format_func=lambda value: filter_labels[value],
+            default="Todas",
+            required=True,
+            key="decision_priority_control",
+            width="stretch",
+            wrap=True,
+        )
+        priority_filter = priority_filter or "Todas"
+        visible_decisions = [
+            (index, item) for index, item in enumerate(decisions)
+            if priority_filter == "Todas" or item["Prioridad"] == priority_filter
+        ]
+        if not decisions:
+            st.info(
+                "No se detectaron asuntos para decidir con estos saldos. "
+                "Aprovecha este espacio para confirmar que la captura esté completa."
+            )
+        elif not visible_decisions:
+            st.info("No hay decisiones con esta prioridad. Prueba otra categoría.")
+        else:
+            if st.session_state.get("decision_detail_folio") != folio:
+                st.session_state["decision_detail_index"] = None
+                st.session_state["decision_detail_folio"] = folio
+                st.session_state["decision_scroll_to_detail"] = False
+            visible_indices = {index for index, _ in visible_decisions}
+            selected_index = st.session_state.get("decision_detail_index")
+            if selected_index not in visible_indices:
+                selected_index = None
+                st.session_state["decision_detail_index"] = None
+                st.session_state["decision_scroll_to_detail"] = False
+
+            def render_decision_choice(index, decision):
+                is_selected = index == selected_index
+                tone = {
+                    "Atención": "danger",
+                    "Revisar": "review",
+                    "Oportunidad": "good",
+                }.get(decision["Prioridad"], "review")
+                with st.container(border=True):
+                    H(
+                        f'<article class="decision-choice {tone}{" is-selected" if is_selected else ""}">'
+                        f'<div class="decision-choice-head">'
+                        f'<span class="decision-choice-priority">{esc(decision["Prioridad"])}</span>'
+                        f'<span class="decision-choice-source">{esc(decision["Fuente"])}</span></div>'
+                        f'<p class="decision-choice-title">{esc(decision["Recomendación"])}</p>'
+                        '</article>'
+                    )
+                    if btn(
+                        "Ocultar detalle" if is_selected else "Ver detalle",
+                        "visibility",
+                        key=f"select_decision_{index}",
+                        type="primary" if is_selected else "secondary",
+                        **STRETCH,
+                    ):
+                        st.session_state["decision_detail_index"] = (
+                            None if is_selected else index
+                        )
+                        st.session_state["decision_scroll_to_detail"] = not is_selected
+                        st.rerun()
+
+            if selected_index is None:
+                st.markdown("#### Bandeja de decisiones")
+                st.caption(
+                    f"{len(visible_decisions)} asuntos · abre «Ver detalle» para consultar los valores "
+                    "que originaron cada decisión"
+                )
+                for start in range(0, len(visible_decisions), 2):
+                    columns = st.columns(2)
+                    for column, (index, decision) in zip(
+                        columns, visible_decisions[start:start + 2]
+                    ):
+                        with column:
+                            render_decision_choice(index, decision)
+            else:
+                list_column, detail_column = st.columns([0.88, 1.12], gap="large")
+                with list_column:
+                    st.markdown("#### Bandeja de decisiones")
+                    st.caption(
+                        f"{len(visible_decisions)} asuntos · elige otra decisión para cambiar el detalle"
+                    )
+                    for index, decision in visible_decisions:
+                        render_decision_choice(index, decision)
+
+                selected_decision = next(
+                    item for index, item in visible_decisions if index == selected_index
+                )
+                status_class = {
+                    "Atención": "danger",
+                    "Revisar": "review",
+                    "Oportunidad": "good",
+                }.get(selected_decision["Prioridad"], "review")
+                status_label = {
+                    "Atención": "Requiere atención prioritaria",
+                    "Revisar": "Conviene validar antes de actuar",
+                    "Oportunidad": "Oportunidad para impulsar",
+                }.get(selected_decision["Prioridad"], "Punto por revisar")
+                with detail_column:
+                    with st.container(border=True):
+                        H(
+                            f'<header id="decision-detail-focus" class="decision-focus-heading {status_class}">'
+                            f'<span class="decision-focus-overline">{esc(status_label)} · '
+                            f'{esc(selected_decision["Fuente"])}</span>'
+                            f'<h3>{esc(selected_decision["Recomendación"])}</h3>'
+                            f'<p>Lectura ejecutiva para el análisis de {esc(record["company"])}</p>'
+                            '</header>'
+                        )
+                        details = (
+                            ("01", "Qué detectó", selected_decision["Qué detectó"]),
+                            ("02", "Por qué importa", selected_decision["Por qué importa"]),
+                            ("03", "Decisión sugerida", selected_decision["Decisión sugerida"]),
+                        )
+                        cards = "".join(
+                            f'<article class="decision-card {status_class}">'
+                            f'<div class="decision-card-head"><span class="decision-card-step">{step}</span>'
+                            f'<span>{esc(title)}</span></div>'
+                            f'<p>{highlight_decision_values(text) if title == "Qué detectó" else esc(text)}</p>'
+                            '</article>'
+                            for step, title, text in details
+                        )
+                        H(
+                            f'<div class="decision-grid" role="group" '
+                            f'aria-label="Detalle de la decisión">{cards}</div>'
+                        )
+
+                        focus_rows = df[
+                            df["Concepto"].isin(selected_decision["Cuentas foco"])
+                            & ((df["Anterior"] != 0) | (df["Reciente"] != 0))
+                        ].copy()
+                        if not focus_rows.empty:
+                            focus_rows["_magnitud"] = focus_rows["Cambio"].abs()
+                            focus_rows = focus_rows.sort_values("_magnitud", ascending=False).head(4)
+                            evidence_cards = "".join(
+                                f'<article class="decision-evidence-card">'
+                                f'<strong>{esc(row["Concepto"])}</strong>'
+                                f'<div class="decision-evidence-values">'
+                                f'<div><span>Anterior</span><b>{esc(money(row["Anterior"], cur))}</b></div>'
+                                f'<div><span>Reciente · marcado</span><b><mark class="decision-value">'
+                                f'{esc(money(row["Reciente"], cur))}</mark></b></div>'
+                                f'<div><span>Variación</span><b>{esc(money(row["Cambio"], cur))}</b></div>'
+                                '</div></article>'
+                                for _, row in focus_rows.iterrows()
+                            )
+                            H(
+                                '<section class="decision-evidence">'
+                                '<h4 class="decision-evidence-title">Valores que originan esta decisión</h4>'
+                                f'<div class="decision-evidence-grid">{evidence_cards}</div></section>'
+                            )
+                        elif selected_decision.get("Indicador"):
+                            H(
+                                '<section class="decision-evidence">'
+                                '<h4 class="decision-evidence-title">Indicador que origina esta decisión</h4>'
+                                f'<article class="decision-evidence-card"><strong>'
+                                f'{esc(selected_decision["Indicador"])} · {esc(selected_decision["Periodo"])}'
+                                f'</strong><mark class="decision-value">'
+                                f'{esc(selected_decision["Valor clave"])}</mark></article></section>'
+                            )
+                        else:
+                            H(
+                                '<section class="decision-evidence">'
+                                '<h4 class="decision-evidence-title">Señal cuantitativa</h4>'
+                                f'<article class="decision-evidence-card">'
+                                f'{highlight_decision_values(selected_decision["Qué detectó"])}</article>'
+                                '</section>'
+                            )
+
+                        target = selected_decision["Sección"]
+                        H(
+                            f'<div class="decision-route"><span class="decision-route-label">'
+                            f'El valor también quedará resaltado en <b>{esc(target)}</b>.</span></div>'
+                        )
+                        if btn(
+                            f"Abrir {target}",
+                            "arrow_forward",
+                            key="open_selected_decision_section",
+                            type="primary",
+                            **STRETCH,
+                        ):
+                            st.session_state["decision_focus_accounts"] = selected_decision["Cuentas foco"]
+                            st.session_state["decision_focus_labels"] = selected_decision["Etiquetas foco"]
+                            st.session_state["decision_focus_ratio"] = selected_decision.get("Indicador")
+                            st.session_state["decision_focus_period"] = selected_decision.get("Periodo")
+                            if target == "Estados financieros":
+                                focus_categories = set(
+                                    df.loc[
+                                        df["Concepto"].isin(selected_decision["Cuentas foco"]),
+                                        "Categoria",
+                                    ]
+                                )
+                                result_words = (
+                                    "utilidad", "perdida", "costo", "gasto", "venta", "margen"
+                                )
+                                focus_text = _norm(
+                                    selected_decision["Recomendación"] + " "
+                                    + " ".join(selected_decision["Etiquetas foco"])
+                                )
+                                focus_tab = (
+                                    "Estado de resultados"
+                                    if "Estado de resultados (opcional)" in focus_categories
+                                    or any(word in focus_text for word in result_words)
+                                    else "Balance general"
+                                )
+                                st.session_state["decision_focus_tab"] = focus_tab
+                                st.session_state["financial_statement_tabs"] = focus_tab
+                            st.session_state["decision_scroll_to_source"] = True
+                            go(target)
+                    if st.session_state.pop("decision_scroll_to_detail", False):
+                        scroll_to_element("decision-detail-focus", "start")
+
     # ----- Hoja verde -----
-    if page == "Hoja verde":
+    elif page == "Hoja verde":
         kpi_row([
             ("Aumentos acumulados", fmt_money(sheet["Aumento"].sum()), cur, "", "up"),
             ("Disminuciones acumuladas", fmt_money(sheet["Disminucion"].sum()), cur, "", "down"),
@@ -1705,6 +3206,20 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
         view = sheet[["Concepto", "Categoria", "Anterior", "Reciente", "Aumento", "Disminucion",
                       "Origen / Aplicación", "Actividad"]].rename(
             columns={"Categoria": "Categoría", "Disminucion": "Disminución"})
+        if decision_focus_accounts:
+            focus_account_set = set(decision_focus_accounts)
+            source_rows = view[view["Concepto"].isin(focus_account_set)].copy()
+            if not source_rows.empty:
+                source_rows["_focus_magnitude"] = (
+                    source_rows["Reciente"] - source_rows["Anterior"]
+                ).abs()
+                source_rows = source_rows.sort_values(
+                    "_focus_magnitude", ascending=False
+                ).drop(columns="_focus_magnitude")
+                view = pd.concat(
+                    [source_rows, view[~view["Concepto"].isin(focus_account_set)]],
+                    ignore_index=True,
+                )
         flow_styles = {
             "Origen": "background-color:#E6F4EE;color:#0B5D3B;font-weight:600",
             "Aplicación": "background-color:#E8EFFA;color:#0A2A5E;font-weight:600",
@@ -1713,7 +3228,20 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
         styler = view.style.format("{:,.2f}", subset=["Anterior", "Reciente", "Aumento", "Disminución"])
         styler = (getattr(styler, "map", None) or styler.applymap)(
             lambda v: flow_styles.get(v, "color:#55657D"), subset=["Origen / Aplicación"])
+        if decision_focus_accounts:
+            styler = styler.apply(
+                lambda row: [
+                    "background-color:#EAF5FF;color:#244B6C;font-weight:700;border-top:1px solid #C4DFF3;border-bottom:1px solid #C4DFF3"
+                    if row["Concepto"] in focus_account_set else ""
+                    for _ in row
+                ],
+                axis=1,
+            )
+        if decision_scroll_to_source:
+            H('<div id="decision-source-sheet"></div>')
         st.dataframe(styler, **STRETCH, hide_index=True)
+        if decision_scroll_to_source:
+            scroll_to_element("decision-source-sheet", "start")
         st.caption("Origen: fuente de recursos · Aplicación: uso de recursos · Revisar: requiere tu criterio.")
 
         st.subheader("Resumen por actividad")
@@ -1789,7 +3317,7 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
             t = old_totals if period == "Anterior" else new_totals
             existing = json.loads(record["ratios_json"] or "[]")
             for name in chosen:
-                result = calc_ratio(name, t, period)
+                result = calc_ratio(name, t, period, cur)
                 existing = [r for r in existing if not (r["Razón"] == name and r["Periodo"] == period)]
                 existing.append(result)
             with db() as con:
@@ -1817,8 +3345,17 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
                 else:
                     big, small = f"{value:,.2f}", ("%" if unit == "%" else unit)
                 tone = "warn" if value is None else ""
+                focus_class = (
+                    " decision-focus"
+                    if decision_focus_ratio == ratio.get("Razón")
+                    and (
+                        not decision_focus_period
+                        or decision_focus_period == ratio.get("Periodo")
+                    ) else ""
+                )
+                focus_id = ' id="decision-source-ratio"' if focus_class else ""
                 cards += (
-                    f'<div class="ratio"><div class="ratio-top"><span class="ratio-name">{esc(ratio["Razón"])}</span>'
+                    f'<div{focus_id} class="ratio{focus_class}"><div class="ratio-top"><span class="ratio-name">{esc(ratio["Razón"])}</span>'
                     f'{badge(ratio["Periodo"], tone or "")}</div>'
                     f'<div class="ratio-value">{esc(big)}<small>{esc(small)}</small></div>'
                     f'<dl><dt>Qué es</dt><dd>{esc(RATIO_INFO.get(ratio["Razón"], ("", ""))[0])}</dd><dt>Fórmula</dt><dd>{esc(ratio["Fórmula"])}</dd>'
@@ -1826,8 +3363,12 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
                     f'<p>{esc(ratio["Interpretación"])}</p></div>'
                 )
             H(f'<div class="ratios">{cards}</div>')
+            if decision_scroll_to_source and decision_focus_ratio:
+                scroll_to_element("decision-source-ratio")
             with st.expander("Ver tabla de razones"):
-                st.dataframe(pd.DataFrame(ratios), **STRETCH, hide_index=True)
+                ratio_table = pd.DataFrame(ratios).drop(
+                    columns=["Análisis inteligente", "Recomendación"], errors="ignore")
+                st.dataframe(ratio_table, **STRETCH, hide_index=True)
 
             if not st.session_state.get("confirm_delete_ratios"):
                 if st.button("Eliminar todas las razones guardadas"):
@@ -1943,7 +3484,7 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
         ratios = json.loads(record["ratios_json"] or "[]")
         st.subheader("Exportar")
         st.caption(
-            f"El PDF incluye la hoja verde y {len(ratios)} razón(es) guardada(s)."
+            f"El PDF incluye la hoja verde y {len(ratios)} razón(es) financiera(s) guardada(s)."
             if ratios else
             "El PDF incluye la hoja verde. Calcula razones en «Razones financieras» para añadirlas al reporte."
         )
@@ -1972,7 +3513,14 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
               'Para modificarlos, envía una solicitud al administrador desde «Solicitudes de cambio».</div></div>')
 
         headers = [record["old_date"], record["new_date"]]
-        tab_bal, tab_res, tab_cf = st.tabs(["Balance general", "Estado de resultados", "Flujo de efectivo"])
+        statement_tabs = ["Balance general", "Estado de resultados", "Flujo de efectivo"]
+        if decision_scroll_to_source and decision_focus_tab:
+            st.session_state["financial_statement_tabs"] = decision_focus_tab
+        tab_bal, tab_res, tab_cf = st.tabs(
+            statement_tabs,
+            default=decision_focus_tab,
+            key="financial_statement_tabs",
+        )
 
         with tab_bal:
             rows = []
@@ -1993,7 +3541,11 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
                 rows.append(("grand", tot_label, [old_totals[tot_key], new_totals[tot_key]]))
             rows.append(("grand", "Total pasivo + capital contable",
                          [old_totals["Pasivo más capital"], new_totals["Pasivo más capital"]]))
-            statement_table(rows, headers)
+            statement_table(
+                rows, headers, decision_focus_labels, "decision-source-row-balance"
+            )
+            if decision_scroll_to_source and decision_focus_tab == "Balance general":
+                scroll_to_element("decision-source-row-balance")
             gap = new_totals["Activo total"] - new_totals["Pasivo más capital"]
             if abs(gap) < 0.01:
                 st.success("El balance reciente cuadra: activo = pasivo + capital.")
@@ -2008,7 +3560,13 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
                 totals_names = {"Utilidad bruta", "Utilidad operativa", "Utilidad neta"}
                 statement_table(
                     [("tot" if r["Concepto"] in totals_names else "item", r["Concepto"], [r["Anterior"], r["Reciente"]])
-                     for _, r in res.iterrows()], headers)
+                     for _, r in res.iterrows()],
+                    headers,
+                    decision_focus_labels,
+                    "decision-source-row-results",
+                )
+                if decision_scroll_to_source and decision_focus_tab == "Estado de resultados":
+                    scroll_to_element("decision-source-row-results")
 
         with tab_cf:
             cf = cash_flow(df)
@@ -2028,7 +3586,14 @@ elif page in ["Estados financieros", "Hoja verde", "Razones financieras", "Gráf
             rows += [("grand", "Aumento (disminución) neto de efectivo", [cf["net"]]),
                      ("item", "Efectivo al inicio del periodo", [cf["start"]]),
                      ("grand", "Efectivo al final del periodo", [cf["start"] + cf["net"]])]
-            statement_table(rows, [f"{record['old_date']} → {record['new_date']}"])
+            statement_table(
+                rows,
+                [f"{record['old_date']} → {record['new_date']}"],
+                decision_focus_labels,
+                "decision-source-row-cashflow",
+            )
+            if decision_scroll_to_source and decision_focus_tab == "Flujo de efectivo":
+                scroll_to_element("decision-source-row-cashflow")
             if abs(cf["diff"]) < 0.01:
                 st.success("El flujo concilia con el efectivo (Caja + Bancos) del balance.")
             else:
