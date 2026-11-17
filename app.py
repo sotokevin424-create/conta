@@ -27,6 +27,10 @@ from reportlab.platypus import (
 
 APP_TITLE = "FINOVA | Análisis Financiero"
 DB_PATH = "finova.db"
+SPANISH_MONTHS = (
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+)
 
 # --------------------------- Sistema de diseño ---------------------------
 # Tokens (CSS custom properties), componentes HTML reutilizables y tema de gráficas.
@@ -62,11 +66,82 @@ header[data-testid="stHeader"]{background:transparent}
 .pg-head h1{font-size:clamp(2rem,4vw,2.8rem);line-height:1.05;margin:0;padding:0;overflow-wrap:anywhere}
 .pg-head p{color:var(--muted);margin:.45rem 0 0;font-size:1rem;overflow-wrap:anywhere}
 
+.dashboard-heading{margin:0}
+.dashboard-heading-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:.45rem;padding:5px 10px;
+  border:1px solid #DCE6F2;border-radius:999px;background:linear-gradient(110deg,#F8FAFD,#EDF3FA);
+  color:#315F9A;font-size:.66rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.dashboard-heading-kicker:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--signal)}
+.dashboard-heading h1{margin:0;color:var(--navy);font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-size:clamp(1.9rem,3vw,2.45rem);font-weight:600;line-height:1.1;letter-spacing:-.04em;
+  overflow-wrap:anywhere}
+.dashboard-heading-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px}
+.dashboard-heading time{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #E2E8F0;
+  border-radius:999px;background:rgba(255,255,255,.74);color:var(--muted);font-size:.74rem;font-weight:500;white-space:nowrap}
+.dashboard-heading p{max-width:58ch;margin:.4rem 0 0;color:var(--muted);font-size:.91rem;line-height:1.5}
+.stApp [data-testid="stMain"] .st-key-dashboard_create_analysis button,
+.stApp [data-testid="stMain"] .st-key-dashboard_continue_analysis button,
+.stApp [data-testid="stMain"] .st-key-dashboard_lookup_analysis button{
+  min-height:38px!important;padding-top:.35rem!important;padding-bottom:.35rem!important}
+.stApp [data-testid="stMain"] .st-key-dashboard_create_analysis button{
+  border:1px solid rgba(255,255,255,.18)!important;
+  background:linear-gradient(135deg,#0B4B9D,#013E8F)!important;
+  box-shadow:0 7px 16px rgba(1,62,143,.2);font-weight:600}
+.stApp [data-testid="stMain"] .st-key-dashboard_create_analysis button:hover{
+  box-shadow:0 10px 20px rgba(1,62,143,.27);transform:translateY(-1px)}
+.stApp [data-testid="stMain"] .st-key-dashboard_continue_analysis button{
+  border-color:#C7D4E5!important;background:rgba(255,255,255,.82)!important}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis){
+  position:relative;isolation:isolate;align-items:center!important;gap:14px;margin:.2rem 0 1.15rem;
+  padding:18px 22px;overflow:hidden;border:1px solid #DCE6F2;border-radius:20px;
+  background:radial-gradient(circle at 91% 10%,rgba(49,95,154,.1),transparent 27%),
+    linear-gradient(112deg,#FFFFFF 0%,#F9FBFE 58%,#EEF4FB 100%);
+  box-shadow:0 12px 30px rgba(10,33,71,.065)}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis):before{
+  content:"";position:absolute;left:0;top:17px;bottom:17px;width:3px;border-radius:0 4px 4px 0;
+  background:linear-gradient(180deg,var(--brand),var(--signal))}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis):after{
+  content:"";position:absolute;z-index:-1;top:-126px;right:-28px;width:250px;height:250px;
+  border:1px solid rgba(49,95,154,.1);border-radius:50%;
+  box-shadow:0 0 0 20px rgba(49,95,154,.025),0 0 0 44px rgba(49,95,154,.018);
+  pointer-events:none}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis)>div[data-testid="stColumn"]{
+  position:relative;z-index:1}
 /* KPIs */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:0 0 1.4rem}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
 .kpi.brand{border-top:3px solid var(--brand)}.kpi.up{border-top:3px solid var(--ok)}
 .kpi.down{border-top:3px solid var(--accent)}.kpi.warn{border-top:3px solid #E0A100}
+.dashboard-summary{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+  overflow:hidden;margin:1.15rem 0 1.45rem;padding:16px 18px;
+  border:1px solid rgba(255,255,255,.13);border-radius:18px;
+  background:linear-gradient(112deg,#091D3E 0%,#0D2C59 53%,#16477F 100%);
+  box-shadow:0 14px 28px rgba(10,33,71,.14)}
+.dashboard-summary:after{content:"";position:absolute;z-index:-1;top:-104px;right:9%;
+  width:220px;height:220px;border:1px solid rgba(220,235,255,.12);border-radius:50%;
+  box-shadow:0 0 0 24px rgba(220,235,255,.035),0 0 0 50px rgba(220,235,255,.025);
+  pointer-events:none}
+.dashboard-summary-item{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto auto;
+  position:relative;z-index:1;align-content:start;column-gap:9px;min-width:0;padding:2px 18px;
+  border-left:1px solid rgba(222,235,251,.16)}
+.dashboard-summary-item:first-child{padding-left:0;border-left:0}
+.dashboard-summary-icon{grid-column:1;grid-row:1 / 4;display:grid;place-items:center;width:28px;height:28px;
+  border:1px solid rgba(227,238,252,.2);border-radius:9px;
+  background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.07));color:#D8E8FB}
+.dashboard-summary-icon svg{display:block;width:15px;height:15px}
+.dashboard-summary-item.is-pending .dashboard-summary-icon{border-color:rgba(255,217,137,.32);
+  background:rgba(255,217,137,.12);color:#FFD989}
+.dashboard-summary-label{grid-column:2;color:#C4D2E5;font-size:.66rem;font-weight:600;line-height:1.3;
+  letter-spacing:.075em;text-transform:uppercase}
+.dashboard-summary-value{grid-column:2;display:block;margin-top:4px;color:#FFF;font-size:1.2rem;
+  font-weight:600;line-height:1.25;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.dashboard-summary-detail{grid-column:2;display:block;margin-top:3px;color:#B5C6DD;font-size:.72rem;line-height:1.35}
+.dashboard-summary-item.is-pending .dashboard-summary-value{color:#FFD989}
+.stApp h2.dashboard-section-title{display:flex;align-items:center;gap:14px;margin:1.6rem 0 .45rem;font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-size:1.12rem;font-weight:600;letter-spacing:-.02em}
+.stApp h2.dashboard-section-title:before{content:"";flex:none;width:17px;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--brand),#7395C2)}
+.stApp h2.dashboard-section-title:after{content:"";height:1px;flex:1;
+  background:linear-gradient(90deg,#DCE4EF,rgba(220,228,239,0))}
 .kpi-label{font-size:.76rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .kpi-value{font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,2.3vw,2.2rem);line-height:1.15;
   color:var(--navy);margin-top:.3rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
@@ -92,12 +167,58 @@ header[data-testid="stHeader"]{background:transparent}
 .th{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .row-sep{border:0;border-top:1px solid var(--line);margin:.35rem 0}
 
-/* Tarjetas de navegación (Panel) */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.tile-mark){background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--r);box-shadow:var(--sh);transition:border-color .15s,transform .15s}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.tile-mark):hover{border-color:var(--brand);transform:translateY(-1px)}
-.tile-ic{width:40px;height:40px;border-radius:11px;background:var(--info-bg);color:var(--brand);display:inline-flex;align-items:center;justify-content:center}
-.tile h3{margin:.65rem 0 .1rem}.tile p{color:var(--muted);margin:0 0 .4rem;font-size:.92rem}
+.dashboard-record-folio{color:#62728A;font-family:var(--mono);font-size:.72rem;overflow-wrap:anywhere}
+.dashboard-row-title{display:flex;align-items:center;min-width:0}
+.dashboard-row-title strong{color:var(--navy);font-size:.96rem;font-weight:600;line-height:1.3;
+  letter-spacing:-.015em;overflow-wrap:anywhere}
+.dashboard-company-lockup{display:flex;align-items:center;gap:11px;min-width:0}
+.dashboard-company-avatar{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid #DCE6F3;
+  border-radius:11px;background:linear-gradient(145deg,#F5F8FD,#E5EDF8);color:#315F9A;
+  font-size:.78rem;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.dashboard-company-copy{min-width:0}
+.dashboard-recent-row,.dashboard-portfolio-row{min-width:0;padding:4px 0}
+.dashboard-recent-row{position:relative;padding-left:23px}
+.dashboard-recent-row:before{content:"";position:absolute;left:0;top:9px;width:9px;height:9px;
+  border:2px solid #A8B9CE;border-radius:50%;background:#fff}
+.dashboard-recent-row.is-latest:before{border-color:var(--brand);background:var(--brand);
+  box-shadow:0 0 0 4px rgba(1,62,143,.1)}
+.dashboard-row-subline,.dashboard-row-details{display:flex;flex-wrap:wrap;gap:4px 14px;
+  margin-top:5px;color:var(--muted);font-size:.75rem;line-height:1.4}
+.dashboard-row-subline span:first-child{max-width:38ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-row-subline span:last-child{color:#64748B;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dashboard-row-details strong{margin-right:4px;color:#42516A;font-size:.68rem;font-weight:600}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row){
+  align-items:center!important;margin:5px 0;padding:10px 12px;border:1px solid #E8EEF5;border-radius:14px;
+  background:rgba(255,255,255,.86);box-shadow:0 2px 8px rgba(10,33,71,.025);
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row){
+  align-items:center!important;padding:10px 0;border-bottom:1px solid #E8ECF2;
+  transition:background .15s ease,border-color .15s ease}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row):hover{
+  border-color:#D7E3F1;background:#F9FBFE;box-shadow:0 6px 16px rgba(10,33,71,.06);
+  transform:translateY(-1px)}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row):hover{background:#FAFBFD}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row.is-latest){
+  border-color:#D6E3F2;border-radius:14px;
+  background:linear-gradient(105deg,#EAF2FC 0%,#F8FBFF 46%,#FFFFFF 100%);
+  box-shadow:inset 3px 0 0 #315F9A,0 5px 14px rgba(10,33,71,.055)}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:first-child{
+  border-left:1px solid #E4EAF2;padding-left:14px!important}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row.is-latest)>div[data-testid="stColumn"]:first-child{
+  border-left-color:transparent}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row) .badge,
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row) .badge{
+  padding:4px 10px;font-size:.68rem;letter-spacing:.015em}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:last-child button{
+  min-height:36px!important;padding-left:.5rem!important;padding-right:.5rem!important;font-size:.82rem!important}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:last-child button{
+  min-height:36px!important;padding-left:.55rem!important;padding-right:.55rem!important;font-size:.82rem!important}
+.dashboard-portfolio-head{display:block;padding:0 2px;color:var(--muted);font-size:.64rem;
+  font-weight:600;letter-spacing:.075em;text-transform:uppercase;white-space:nowrap}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head){
+  padding:0 0 8px;border-bottom:1px solid #DDE4ED}
+div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head)>div[data-testid="stColumn"]{
+  min-width:0}
 
 /* Razones */
 .ratios{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin:.6rem 0 1.2rem}
@@ -126,7 +247,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.tile-mark):hover{border-col
   background:rgba(255,255,255,.1);backdrop-filter:blur(8px)}
 .decision-hero-total strong{font-family:var(--display);font-size:2.6rem;line-height:1;color:#fff}
 .decision-hero-total span{font-size:.72rem;line-height:1.25;color:#D8E6FA;font-weight:600}
-.decision-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 1.1rem}
+.decision-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin:.8rem 0 1.1rem}
 .decision-stat{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid var(--decision-border);
   border-left:4px solid var(--decision-accent);border-radius:14px;background:var(--surface);box-shadow:var(--sh)}
 .decision-stat.danger,.decision-choice.danger,.decision-card.danger{
@@ -144,7 +265,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.tile-mark):hover{border-col
 .decision-stat-copy span{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
 .decision-stat-copy strong{display:block;color:var(--navy);font-family:var(--display);font-size:1.8rem;line-height:1.1}
 .decision-stat-copy small{font-size:.74rem;line-height:1.35}
-.decision-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.85rem 0 1rem}
+.decision-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:.85rem 0 1rem}
 .decision-card{min-height:100%;padding:17px;border:1px solid var(--decision-border);
   border-top:4px solid var(--decision-accent);border-radius:15px;background:var(--decision-bg)}
 .decision-card-head{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:var(--decision-text);
@@ -185,7 +306,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.decision-focus-heading){
 .decision-evidence-values span{display:block;color:#71849A;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em}
 .decision-evidence-values b{display:block;color:#263E57;font-size:.78rem;overflow-wrap:anywhere}
 .decision-value{padding:1px 5px;border:1px solid #C4DFF3;border-radius:5px;background:#EAF5FF;
-  color:#17456C;font-weight:700;white-space:nowrap}
+  color:#17456C;font-weight:700;white-space:normal;overflow-wrap:anywhere}
 .stmt tr.decision-focus td{background:#EAF5FF!important;color:#244B6C;border-top:1px solid #C4DFF3;
   border-bottom:1px solid #C4DFF3;font-weight:700}
 .stmt tr.decision-focus td:first-child:before{content:"◆";margin-right:8px;color:#4E8BB8;font-size:.68rem}
@@ -270,6 +391,60 @@ section[data-testid="stSidebar"] :focus-visible{outline:3px solid #fff!important
   .decision-hero-total strong{font-size:2rem}.decision-hero-total span{font-size:.64rem}
   .decision-stat-grid,.decision-grid{grid-template-columns:1fr}
   .stepper{gap:8px 16px}
+}
+@media (max-width:760px){
+  .dashboard-heading p{max-width:60ch}
+  .dashboard-summary{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}
+  .dashboard-summary-item:nth-child(odd){padding-left:0;border-left:0}
+  div[data-testid="stHorizontalBlock"]:has(.st-key-panel_activity_search){flex-wrap:wrap!important}
+  div[data-testid="stHorizontalBlock"]:has(.st-key-panel_activity_search)>div[data-testid="stColumn"]{
+    flex:1 1 185px!important;width:auto!important;min-width:min(100%,185px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:first-child{
+    flex:1 1 100%!important;width:auto!important;min-width:100%!important}
+}
+@media (max-width:900px){
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis){
+    flex-wrap:wrap!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis)>div[data-testid="stColumn"]:first-child{
+    flex:1 1 380px!important;width:auto!important;min-width:min(100%,380px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis)>div[data-testid="stColumn"]:last-child{
+    flex:1 1 300px!important;width:auto!important;min-width:min(100%,300px)!important}
+}
+@media (max-width:480px){
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-heading):has(.st-key-dashboard_create_analysis){
+    padding:15px 14px}
+  .dashboard-summary-item{padding-right:10px;padding-left:10px}
+  .dashboard-summary-value{font-size:1rem}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:last-child button,
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:last-child button{
+    min-height:44px!important}
+}
+@media (max-width:1100px){
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head){flex-wrap:wrap!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head)>div[data-testid="stColumn"]:first-child{
+    flex:3.7 1 250px!important;width:auto!important;min-width:min(100%,250px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head)>div[data-testid="stColumn"]:nth-child(2){
+    flex:4 1 240px!important;width:auto!important;min-width:min(100%,240px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head)>div[data-testid="stColumn"]:nth-child(3){
+    flex:1.15 1 90px!important;width:auto!important;min-width:min(100%,90px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-head)>div[data-testid="stColumn"]:last-child{
+    flex:1.7 1 130px!important;width:auto!important;min-width:min(100%,130px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row){flex-wrap:wrap!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:first-child{
+    flex:5 1 270px!important;width:auto!important;min-width:min(100%,270px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:nth-child(2){
+    flex:1.2 1 90px!important;width:auto!important;min-width:min(100%,90px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-recent-row)>div[data-testid="stColumn"]:last-child{
+    flex:1.3 1 110px!important;width:auto!important;min-width:min(100%,110px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row){flex-wrap:wrap!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:first-child{
+    flex:3.7 1 250px!important;width:auto!important;min-width:min(100%,250px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:nth-child(2){
+    flex:4 1 240px!important;width:auto!important;min-width:min(100%,240px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:nth-child(3){
+    flex:1.15 1 90px!important;width:auto!important;min-width:min(100%,90px)!important}
+  div[data-testid="stHorizontalBlock"]:has(.dashboard-portfolio-row)>div[data-testid="stColumn"]:last-child{
+    flex:1.7 1 130px!important;width:auto!important;min-width:min(100%,130px)!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -365,7 +540,7 @@ def page_header(title, subtitle="", eyebrow=""):
     H(f'<div class="pg-head">{eb}<h1>{esc(title)}</h1>{sub}</div>')
 
 
-def kpi_row(items):
+def kpi_row(items, class_name=""):
     """items: (etiqueta, valor, unidad, nota, tono)"""
     cells = ""
     for it in items:
@@ -378,7 +553,130 @@ def kpi_row(items):
         hint_html = f'<div class="kpi-hint">{esc(hint)}</div>' if hint else ""
         cells += (f'<div class="kpi {tone}"><div class="kpi-label">{esc(label)}</div>'
                   f'<div class="kpi-value{size}">{esc(value)}{unit_html}</div>{hint_html}</div>')
-    H(f'<div class="kpis">{cells}</div>')
+    H(f'<div class="kpis {esc(class_name)}">{cells}</div>')
+
+
+def panel_date_label(timestamp):
+    value = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00")).date()
+    return f"{value.day} {SPANISH_MONTHS[value.month - 1][:3]}. {value.year}"
+
+
+def panel_relative_date(timestamp):
+    activity_date = datetime.fromisoformat(
+        str(timestamp).replace("Z", "+00:00")
+    ).date()
+    days_since = max((date.today() - activity_date).days, 0)
+    if days_since == 0:
+        return "Hoy"
+    if days_since == 1:
+        return "Ayer"
+    if days_since < 7:
+        return f"Hace {days_since} días"
+    if days_since < 30:
+        weeks = days_since // 7
+        return f"Hace {weeks} semana" + ("s" if weeks != 1 else "")
+    if days_since < 365:
+        months = days_since // 30
+        return f"Hace {months} mes" + ("es" if months != 1 else "")
+    years = days_since // 365
+    return f"Hace {years} año" + ("s" if years != 1 else "")
+
+
+def render_panel_records(records, active_folio, variant, key_prefix):
+    for index, record in enumerate(records):
+        folio = record["folio"]
+        company_initial = (record["company"] or "?")[:1].upper()
+        is_active = folio == active_folio
+        status_html = badge("Activo", "ok") if is_active else badge("Guardado", "muted")
+        date_label = panel_date_label(record["last_activity_at"])
+
+        if variant == "recent":
+            info_column, status_column, action_column = st.columns(
+                [5, 1.2, 1.3],
+                **_COL_VA,
+            )
+            with info_column:
+                H(
+                    '<div class="dashboard-recent-row'
+                    f'{" is-latest" if index == 0 else ""}">'
+                    '<div class="dashboard-company-lockup">'
+                    f'<span class="dashboard-company-avatar" aria-hidden="true">{esc(company_initial)}</span>'
+                    '<div class="dashboard-company-copy">'
+                    f'<div class="dashboard-row-title"><strong>{esc(record["company"])}</strong></div>'
+                    f'<div class="dashboard-record-folio">{esc(folio)}</div></div></div>'
+                    '<div class="dashboard-row-subline">'
+                    f'<span>{esc(record["last_activity_action"] or "Sin actividad registrada")}</span>'
+                    f'<span>{esc(date_label)}</span></div></div>'
+                )
+            with status_column:
+                H(status_html)
+            with action_column:
+                action_label = "Continuar" if is_active else "Abrir"
+                if st.button(
+                    action_label,
+                    key=f"{key_prefix}_open_{folio}",
+                    type="secondary",
+                ):
+                    st.session_state.current_folio = folio
+                    go("Decisiones" if is_active else "Hoja verde")
+            continue
+
+        info_column, detail_column, status_column, actions_column = st.columns(
+            [3.7, 4, 1.15, 1.7],
+            **_COL_VA,
+        )
+        with info_column:
+            H(
+                '<div class="dashboard-portfolio-row">'
+                '<div class="dashboard-company-lockup">'
+                f'<span class="dashboard-company-avatar" aria-hidden="true">{esc(company_initial)}</span>'
+                '<div class="dashboard-company-copy">'
+                f'<div class="dashboard-row-title"><strong>{esc(record["company"])}</strong></div>'
+                f'<div class="dashboard-record-folio">{esc(folio)}</div></div></div></div>'
+            )
+        with detail_column:
+            activity_label = "Actividad" if record["last_activity_action"] else "Creado"
+            H(
+                '<div class="dashboard-row-details">'
+                f'<span><strong>Periodo</strong> {esc(record["old_date"])} → {esc(record["new_date"])}</span>'
+                f'<span><strong>Responsable</strong> {esc(record["owner_name"])}</span>'
+                f'<span><strong>{activity_label}</strong> {esc(date_label)}</span></div>'
+            )
+        with status_column:
+            H(status_html)
+        with actions_column:
+            action_columns = st.columns([1.1, 1])
+            with action_columns[0]:
+                if st.button(
+                    "Abrir",
+                    key=f"{key_prefix}_open_{folio}",
+                    type="secondary",
+                ):
+                    st.session_state.current_folio = folio
+                    go("Hoja verde")
+            with action_columns[1]:
+                actions = ["Decisiones", "Estados financieros", "Reporte gerencial"]
+                if hasattr(st, "menu_button"):
+                    secondary_action = st.menu_button(
+                        "Más",
+                        actions,
+                        key=f"{key_prefix}_actions_{folio}",
+                        help="Abrir otra sección de este análisis",
+                        type="tertiary",
+                        icon=":material/more_horiz:",
+                    )
+                else:
+                    secondary_action = st.selectbox(
+                        "Más acciones",
+                        ["Selecciona"] + actions,
+                        key=f"{key_prefix}_actions_{folio}",
+                        label_visibility="collapsed",
+                    )
+                    if secondary_action == "Selecciona":
+                        secondary_action = None
+                if secondary_action:
+                    st.session_state.current_folio = folio
+                    go(secondary_action)
 
 
 def empty_state(icon_name, title, text):
@@ -2517,66 +2815,233 @@ def save_new_analysis(df, uploads, doc_kind, pending_capture=False, note=""):
     return folio
 
 if page == "Panel":
-    with db() as con:
-        base_q = "SELECT a.*, u.username AS owner_name FROM analyses a JOIN users u ON u.id=a.owner_id "
-        records = (con.execute(base_q + "ORDER BY a.id DESC").fetchall() if is_admin else
-                   con.execute(base_q + "WHERE a.owner_id=? ORDER BY a.id DESC", (user["id"],)).fetchall())
+    if st.session_state.get("_panel_dashboard_version") != 3:
+        chart_company = st.session_state.get("panel_chart_company")
+        if chart_company and st.session_state.get("panel_company_filter") == chart_company:
+            st.session_state["panel_company_filter"] = "Todas"
+        for key in ("panel_chart_company", "panel_chart_previous_view", "panel_chart_version", "panel_chart_view"):
+            st.session_state.pop(key, None)
+        st.session_state["_panel_dashboard_version"] = 3
 
-    page_header("Centro de mando financiero", "Balances comparativos, variaciones, razones y reportes.", "Panel")
-    kpi_row([
-        ("Todos los análisis" if is_admin else "Mis análisis", len(records), "", "", "brand"),
-        (("Solicitudes pendientes", pending, "", "Requieren tu atención" if pending else "Sin pendientes",
-          "warn" if pending else "") if is_admin else
-         ("Empresas analizadas", len({r["company"].casefold() for r in records}))),
-        ("Último análisis", records[0]["created_at"][:10] if records else "—"),
-        ("Análisis activo", active["company"] if active else "Ninguno", "",
-         active["folio"] if active else "Ábrelo desde la actividad reciente"),
-    ])
+    with db() as con:
+        base_q = """
+            SELECT a.*, u.username AS owner_name,
+                   COALESCE(latest_log.created_at, a.created_at) AS last_activity_at,
+                   latest_log.action AS last_activity_action
+            FROM analyses a
+            JOIN users u ON u.id=a.owner_id
+            LEFT JOIN analysis_log latest_log ON latest_log.id=(
+                SELECT l.id FROM analysis_log l
+                WHERE l.folio=a.folio ORDER BY l.id DESC LIMIT 1
+            )
+        """
+        records = (
+            con.execute(base_q + "ORDER BY last_activity_at DESC, a.id DESC").fetchall()
+            if is_admin else
+            con.execute(
+                base_q + "WHERE a.owner_id=? ORDER BY last_activity_at DESC, a.id DESC",
+                (user["id"],),
+            ).fetchall()
+        )
+        panel_pending = (
+            pending if is_admin else
+            con.execute(
+                "SELECT COUNT(*) FROM change_requests "
+                "WHERE status='pendiente' AND requester_id=?",
+                (user["id"],),
+            ).fetchone()[0]
+        )
+
+    latest_record = records[0] if records else None
+    focus_record = active or latest_record
+    hour = datetime.now().hour
+    greeting = "Buenos días" if hour < 12 else "Buenas tardes" if hour < 19 else "Buenas noches"
+    dashboard_intro, dashboard_actions = st.columns([1.8, 1.2], **_COL_VA)
+    with dashboard_intro:
+        today_label = panel_date_label(date.today().isoformat())
+        H(
+            '<header class="dashboard-heading">'
+            '<span class="dashboard-heading-kicker">FINOVA · Panel</span>'
+            '<div class="dashboard-heading-line">'
+            f'<h1>{greeting}, {esc(user["username"])}</h1>'
+            f'<time>{esc(today_label)}</time></div>'
+            '<p>Tu cartera financiera, en un solo lugar.</p></header>'
+        )
+    with dashboard_actions:
+        action_columns = st.columns([1, 1.1])
+        with action_columns[0]:
+            if btn(
+                "Crear análisis",
+                "note_add",
+                type="primary",
+                key="dashboard_create_analysis",
+            ):
+                go("Nuevo análisis")
+        with action_columns[1]:
+            if focus_record:
+                if btn(
+                    "Continuar análisis",
+                    "arrow_forward",
+                    type="secondary",
+                    key="dashboard_continue_analysis",
+                ):
+                    st.session_state.current_folio = focus_record["folio"]
+                    go("Decisiones")
+            elif btn(
+                    "Consultar por folio",
+                "search",
+                type="secondary",
+                key="dashboard_lookup_analysis",
+            ):
+                go("Consulta por folio")
+
+    summary_items = [
+        ("Total de análisis", str(len(records)), "En tu cartera", "", "folder"),
+        (
+            "Análisis activos",
+            "1" if active else "0",
+            active["company"] if active else "Ninguno abierto",
+            "",
+            "check",
+        ),
+        (
+            "Solicitudes pendientes",
+            str(panel_pending),
+            "Requieren atención" if panel_pending else "Al día",
+            "is-pending" if panel_pending else "",
+            "edit",
+        ),
+        (
+            "Última actividad",
+            panel_relative_date(latest_record["last_activity_at"]) if latest_record else "Sin actividad",
+            panel_date_label(latest_record["last_activity_at"]) if latest_record else "Aún no hay registros",
+            "",
+            "bar-chart",
+        ),
+    ]
+    summary_html = '<section class="dashboard-summary" aria-label="Resumen general">'
+    for label, value, detail, tone, icon_name in summary_items:
+        summary_html += (
+            f'<div class="dashboard-summary-item {tone}">'
+            f'<span class="dashboard-summary-icon">{icon(icon_name, 16)}</span>'
+            f'<span class="dashboard-summary-label">{esc(label)}</span>'
+            f'<strong class="dashboard-summary-value">{esc(value)}</strong>'
+            f'<small class="dashboard-summary-detail">{esc(detail)}</small></div>'
+        )
+    H(summary_html + "</section>")
 
     if not records:
-        empty_state("file-plus", "Aún no has guardado análisis",
-                    "Captura los saldos de dos periodos y FINOVA calculará variaciones, razones y el reporte.")
-        if btn("Crear primer análisis", "note_add", type="primary", key="first_analysis"):
-            go("Nuevo análisis")
+        H('<h2 class="dashboard-section-title">Actividad reciente</h2>')
+        st.caption("Los análisis recientes aparecerán aquí.")
+        empty_state(
+            "file-plus",
+            "Tu cartera aparecerá aquí",
+            "Crea tu primer análisis para comparar dos periodos y consultar sus resultados.",
+        )
     else:
-        st.subheader("Flujo de trabajo")
-        tiles = [
-            ("checklist", "Decisiones", "Acciones prioritarias y acceso al área que debes revisar."),
-            ("file-plus", "Nuevo análisis", "Captura y compara dos balances."),
-            ("table", "Hoja verde", "Orígenes, aplicaciones y variaciones."),
-            ("percent", "Razones financieras", "Liquidez, deuda y rentabilidad."),
-            ("bar-chart", "Gráficas", "Visualiza cambios y composición."),
-            ("file-text", "Reporte gerencial", "Exporta un PDF."),
-            ("search", "Consulta por folio", "Recupera un análisis guardado."),
-            ("scale", "Estados financieros", "Balance, resultados y flujo de efectivo."),
-            ("folder", "Documentos", "PDF y archivos de respaldo."),
-            ("edit", "Solicitudes de cambio", "Pide o atiende cambios a estados guardados."),
+        H('<h2 class="dashboard-section-title">Actividad reciente</h2>')
+        st.caption("Ordenados por actividad registrada o fecha de creación.")
+        render_panel_records(records[:5], active["folio"] if active else None, "recent", "recent")
+
+        H('<h2 class="dashboard-section-title">Cartera de análisis</h2>')
+        filter_columns = st.columns([2.2, 1.15, 1, 1, 1.2] if is_admin else [2.5, 1.2, 1, 1.2])
+        with filter_columns[0]:
+            activity_query = st.text_input(
+                "Buscar",
+                placeholder="Empresa, folio o responsable",
+                key="panel_activity_search",
+            ).strip().casefold()
+        with filter_columns[1]:
+            company_options = ["Todas"] + sorted(
+                {record["company"] for record in records},
+                key=str.casefold,
+            )
+            if st.session_state.get("panel_company_filter", "Todas") not in company_options:
+                st.session_state["panel_company_filter"] = "Todas"
+            company_filter = st.selectbox(
+                "Empresa",
+                company_options,
+                key="panel_company_filter",
+            )
+        with filter_columns[2]:
+            status_filter = st.selectbox(
+                "Estado",
+                ["Todos", "Activo", "Guardado"],
+                key="panel_analysis_status",
+            )
+        if is_admin:
+            with filter_columns[3]:
+                owner_options = ["Todos"] + sorted(
+                    {record["owner_name"] for record in records},
+                    key=str.casefold,
+                )
+                owner_filter = st.selectbox(
+                    "Responsable",
+                    owner_options,
+                    key="panel_owner_filter",
+                )
+            sort_column = filter_columns[4]
+        else:
+            owner_filter = "Todos"
+            sort_column = filter_columns[3]
+        with sort_column:
+            sort_options = [
+                "Actividad reciente",
+                "Creación reciente",
+                "Creación más antigua",
+                "Empresa A-Z",
+            ] + (["Responsable A-Z"] if is_admin else [])
+            if st.session_state.get("panel_activity_sort") not in sort_options:
+                st.session_state["panel_activity_sort"] = "Actividad reciente"
+            sort_order = st.selectbox(
+                "Ordenar por",
+                sort_options,
+                key="panel_activity_sort",
+            )
+
+        filtered_records = [
+            record for record in records
+            if (not activity_query or activity_query in (
+                f'{record["company"]} {record["folio"]} {record["owner_name"]}'
+            ).casefold())
+            and (company_filter == "Todas" or record["company"] == company_filter)
+            and (status_filter == "Todos"
+                 or (status_filter == "Activo" and active and record["folio"] == active["folio"])
+                 or (status_filter == "Guardado" and (not active or record["folio"] != active["folio"])))
+            and (owner_filter == "Todos" or record["owner_name"] == owner_filter)
         ]
-        for start in range(0, len(tiles), 3):
-            for col, (ic, name, desc) in zip(st.columns(3), tiles[start:start + 3]):
-                with col:
-                    with st.container(border=True):
-                        H(f'<div class="tile"><span class="tile-mark"></span><span class="tile-ic">{icon(ic)}</span>'
-                          f'<h3>{esc(name)}</h3><p>{esc(desc)}</p></div>')
-                        if st.button("Abrir", key="tile_" + name, **STRETCH):
-                            go(name)
+        if sort_order == "Creación más antigua":
+            filtered_records.sort(key=lambda record: record["created_at"])
+        elif sort_order == "Creación reciente":
+            filtered_records.sort(key=lambda record: record["created_at"], reverse=True)
+        elif sort_order == "Empresa A-Z":
+            filtered_records.sort(key=lambda record: record["company"].casefold())
+        elif sort_order == "Responsable A-Z":
+            filtered_records.sort(key=lambda record: record["owner_name"].casefold())
+        else:
+            filtered_records.sort(key=lambda record: record["last_activity_at"], reverse=True)
 
-        st.subheader("Actividad reciente")
-        spec = [3, 2.4, 1.6, 1.1]
-        for c, title in zip(st.columns(spec), ["Empresa y folio", "Comparación", "Creado", ""]):
-            H(f'<span class="th">{title}</span>', c)
-        H('<hr class="row-sep">')
-        for r in records[:8]:
-            c = st.columns(spec, **_COL_VA)
-            owner = f' · {esc(r["owner_name"])}' if is_admin else ""
-            H(f'<b>{esc(r["company"])}</b><br><span class="mono">{esc(r["folio"])}{owner}</span>', c[0])
-            H(f'<span>{esc(r["old_date"])} → {esc(r["new_date"])}</span>', c[1])
-            H(f'<span>{esc(r["created_at"][:16].replace("T", " "))}</span>', c[2])
-            if c[3].button("Abrir", key="open_" + r["folio"], **STRETCH):
-                st.session_state.current_folio = r["folio"]
-                go("Hoja verde")
-            H('<hr class="row-sep">')
+        result_count = len(filtered_records)
+        result_label = f"{result_count} expediente" + ("s" if result_count != 1 else "")
+        st.caption(
+            result_label if filtered_records else "No hay expedientes con estos filtros."
+        )
 
+        if not filtered_records:
+            st.info("Prueba con otra búsqueda o cambia los filtros para encontrar un expediente.")
+        else:
+            portfolio_headers = st.columns([3.7, 4, 1.15, 1.7], **_COL_VA)
+            for label, column in zip(
+                ["Empresa / folio", "Periodo · responsable · actividad", "Estado", "Acciones"],
+                portfolio_headers,
+            ):
+                H(f'<span class="dashboard-portfolio-head">{esc(label)}</span>', column)
+            render_panel_records(
+                filtered_records,
+                active["folio"] if active else None,
+                "portfolio",
+                "portfolio",
+            )
 
 # --------------------------- Administración ---------------------------
 
